@@ -35,7 +35,7 @@
     function submitMedication(e) {
         e.preventDefault();
         const medData = {
-            user_id: 1, // Mock User ID, in real app get from session
+            user_id: "{{ session.get('user_id') }}",
             name: document.getElementById('medName').value,
             time: document.getElementById('medTime').value,
             frequency: document.getElementById('medFreq').value

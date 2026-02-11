@@ -25,6 +25,65 @@
             <button onclick="sendMessage()" class="cta-btn" style="padding: 10px 20px;"><i
                     class="fas fa-paper-plane"></i></button>
         </div>
+
+        <!-- Feedback Trigger -->
+        <div style="text-align: center; margin-top: 1rem;">
+            <p style="font-size: 0.9rem; color: #777;">Was this advice helpful?
+                <button onclick="openFeedback(true)"
+                    style="border:none; background:none; color:green; cursor:pointer;"><i
+                        class="fas fa-thumbs-up"></i></button>
+                <button onclick="openFeedback(false)"
+                    style="border:none; background:none; color:red; cursor:pointer;"><i
+                        class="fas fa-thumbs-down"></i></button>
+            </p>
+        </div>
     </div>
-</div>
-{% endblock %}
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="glass-card"
+        style="display:none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 3000; width: 400px; padding: 2rem;">
+        <h3 style="color: var(--primary); margin-bottom: 1rem;">Improve Aura AI</h3>
+        <p id="feedbackTitle" style="margin-bottom: 1rem; font-weight: bold;"></p>
+        <textarea id="feedbackComment" placeholder="What can we improve? (Optional)"
+            style="width: 100%; height: 100px; border-radius: 10px; border: 1px solid #ddd; padding: 10px; margin-bottom: 1rem;"></textarea>
+        <div style="display: flex; gap: 1rem;">
+            <button onclick="submitFeedback()" class="cta-btn" style="flex:1;">Submit</button>
+            <button onclick="closeFeedback()" class="cta-btn"
+                style="flex:1; background:#ccc; color:#333;">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        let currentHelpfulStatus = true;
+        const USER_ID = "{{ session.get('user_id') }}";
+
+        function openFeedback(isHelpful) {
+            currentHelpfulStatus = isHelpful;
+            document.getElementById('feedbackModal').style.display = 'block';
+            document.getElementById('feedbackTitle').innerText = isHelpful ? 'Glad to hear! Any additional notes?' : 'Sorry about that. How can we do better?';
+        }
+
+        function closeFeedback() {
+            document.getElementById('feedbackModal').style.display = 'none';
+        }
+
+        function submitFeedback() {
+            const comment = document.getElementById('feedbackComment').value;
+            fetch('/api/feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: USER_ID,
+                    comment: comment,
+                    helpful: currentHelpfulStatus
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    alert("Thank you for your feedback! It helps us improve Aura.");
+                    closeFeedback();
+                    document.getElementById('feedbackComment').value = '';
+                });
+        }
+    </script>
+    {% endblock %}

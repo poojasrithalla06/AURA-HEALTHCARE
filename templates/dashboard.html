@@ -71,11 +71,27 @@
             <div class="glass-card">
                 <h3 style="margin-bottom: 1rem;">Medications</h3>
                 <ul id="medList" style="list-style: none; padding: 0;">
-                    <!-- Populated by JS -->
                     <li style="color: #999;">Loading...</li>
                 </ul>
                 <button onclick="addMedication()" class="cta-btn"
                     style="background: var(--secondary); font-size: 0.8rem; padding: 5px 15px;">+ Add Reminder</button>
+            </div>
+
+            <div class="glass-card">
+                <h3 style="margin-bottom: 1rem;">System Experience</h3>
+                <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">How is your experience with Aura AI?</p>
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <button id="dashHelpful" onclick="setDashboardHelpful(true)" class="cta-btn"
+                        style="flex: 1; background: rgba(76, 175, 80, 0.1); color: green; font-size: 0.8rem; padding: 8px; border: 1px solid green;"><i
+                            class="fas fa-smile"></i> Good</button>
+                    <button id="dashNotHelpful" onclick="setDashboardHelpful(false)" class="cta-btn"
+                        style="flex: 1; background: #eee; color: #E91E63; font-size: 0.8rem; padding: 8px;"><i
+                            class="fas fa-frown"></i> Poor</button>
+                </div>
+                <textarea id="dashComment" placeholder="Tell us more about your experience..."
+                    style="width: 100%; border-radius: 10px; border: 1px solid #ddd; padding: 8px; font-size: 0.8rem; margin-bottom: 0.8rem; min-height: 60px; outline: none;"></textarea>
+                <button onclick="submitDashboardFeedback()" class="cta-btn"
+                    style="width: 100%; font-size: 0.9rem;">Submit Feedback</button>
             </div>
 
         </div>
@@ -83,7 +99,34 @@
 </div>
 
 <script>
-    // Pass user ID to JS
+    let dashIsHelpful = true;
     const USER_ID = {{ user.id }};
+
+    function setDashboardHelpful(status) {
+        dashIsHelpful = status;
+        document.getElementById('dashHelpful').style.background = status ? 'rgba(76, 175, 80, 0.1)' : '#eee';
+        document.getElementById('dashHelpful').style.border = status ? '1px solid green' : 'none';
+
+        document.getElementById('dashNotHelpful').style.background = !status ? 'rgba(233, 30, 99, 0.1)' : '#eee';
+        document.getElementById('dashNotHelpful').style.border = !status ? '1px solid #E91E63' : 'none';
+    }
+
+    function submitDashboardFeedback() {
+        const comment = document.getElementById('dashComment').value;
+        fetch('/api/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: USER_ID,
+                comment: comment || (dashIsHelpful ? "Overall good experience" : "User reported poor experience"),
+                helpful: dashIsHelpful
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+                alert("Thank you! Your feedback helps us improve Aura for everyone.");
+                document.getElementById('dashComment').value = '';
+            });
+    }
 </script>
 {% endblock %}

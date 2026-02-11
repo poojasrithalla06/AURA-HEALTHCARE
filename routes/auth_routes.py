@@ -13,6 +13,7 @@ def login():
         
         if user and check_password_hash(user.password_hash, password):
             session['user_id'] = user.id
+            session['role'] = user.role
             if user.role == 'doctor':
                 return redirect(url_for('main.doctor_dashboard'))
             elif user.role == 'admin':
@@ -29,25 +30,30 @@ def signup():
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
-        role = request.form.get('role', 'user') # For demo, this could be 'doctor' or 'admin'
+        role = request.form.get('role', 'user')
         
-        # Check if user already exists
-        user_exists = User.query.filter((User.username==username) | (User.email==email)).first()
-        if user_exists:
-            flash('Username or Email already exists. Please login.', 'danger')
+        # Security: Check if username or email already exists to avoid IntegrityError
+        existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
+        if existing_user:
+            flash('Username or Email already exists. Please login or use a different one.', 'danger')
             return redirect(url_for('auth.signup'))
 
         hashed_password = generate_password_hash(password)
         new_user = User(username=username, email=email, password_hash=hashed_password, role=role)
-        db.session.add(new_user)
-        db.session.commit()
         
-        flash('Account created successfully! Please login.', 'success')
-        return redirect(url_for('auth.login'))
-        
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            flash('Account created successfully! Please login.', 'success')
+            return redirect(url_for('auth.login'))
+        except Exception as e:
+            db.session.rollback()
+            flash('An error occurred while creating your account. Please try again.', 'danger')
+            return redirect(url_for('auth.signup'))
+            
     return render_template('signup.html')
 
 @auth_bp.route('/logout')
 def logout():
-    session.pop('user_id', None)
+    session.clear()
     return redirect(url_for('auth.login'))

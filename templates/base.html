@@ -24,6 +24,13 @@
             {% if session.get('user_id') %}
             <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
             <a href="{{ url_for('main.chatbot') }}">AI Chat</a>
+            {% if session.get('role') == 'doctor' %}
+            <a href="{{ url_for('main.doctor_dashboard') }}">Doc Panel</a>
+            {% elif session.get('role') == 'admin' %}
+            <a href="{{ url_for('main.admin_panel') }}">Admin Dashboard</a>
+            <a href="{{ url_for('main.admin_panel') }}#feedbackTab"
+                style="color: var(--secondary); font-weight: bold;">AI Feedback</a>
+            {% endif %}
             <a href="{{ url_for('main.report') }}">My Report</a>
             <a href="{{ url_for('auth.logout') }}" style="color: var(--accent);">Logout</a>
             {% else %}

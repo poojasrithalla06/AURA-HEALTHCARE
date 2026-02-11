@@ -164,19 +164,26 @@ function sendSOS(loc) {
         .then(data => alert(data.message));
 }
 
+let loadedMeds = [];
+
 function loadMedications() {
     if (typeof USER_ID === 'undefined') return;
+
+    // Request Notification permission
+    if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+    }
 
     fetch('/api/medication?user_id=' + USER_ID)
         .then(res => res.json())
         .then(data => {
+            loadedMeds = data;
             const list = document.getElementById('medList');
             if (!list) return;
             list.innerHTML = '';
             if (data.length === 0) list.innerHTML = '<li style="color:#999; padding: 10px;">No reminders set.</li>';
 
             data.forEach(med => {
-                // Create list item
                 const li = document.createElement('li');
                 li.style.cssText = "padding: 0.8rem; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;";
                 li.innerHTML = `
@@ -192,6 +199,33 @@ function loadMedications() {
                 list.appendChild(li);
             });
         });
+}
+
+// Check for medication reminders every minute
+setInterval(() => {
+    const now = new Date();
+    const currentTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+
+    loadedMeds.forEach(med => {
+        // Handle both 24h and 12h formats if necessary, assuming 24h from input
+        if (med.time === currentTime) {
+            triggerMedicationAlert(med);
+        }
+    });
+}, 60000);
+
+function triggerMedicationAlert(med) {
+    const title = "💊 Medication Reminder: " + med.name;
+    const options = {
+        body: "It's time to take your " + med.name + ". Stay healthy!",
+        icon: "/static/img/pill-icon.png" // Fallback to icon if exists
+    };
+
+    if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(title, options);
+    } else {
+        alert(title + "\n" + options.body);
+    }
 }
 
 function addMedication() {

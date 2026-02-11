@@ -1,39 +1,120 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="glass-card" style="max-width: 1000px; margin: 4rem auto; padding: 2rem;">
-    <h2 style="color: var(--primary); text-align: center; margin-bottom: 2rem;">Admin Panel</h2>
+<div class="glass-card" style="max-width: 1200px; margin: 2rem auto; padding: 2rem;">
+    <h2 style="color: var(--primary); text-align: center; margin-bottom: 2rem;"><i class="fas fa-user-shield"></i> Admin
+        Dashboard</h2>
 
-    <div style="overflow-x: auto;">
-        <table class="table" style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="background: var(--primary); color: white;">
-                    <th style="padding: 1rem; border-radius: 8px 0 0 8px;">ID</th>
-                    <th style="padding: 1rem;">Username</th>
-                    <th style="padding: 1rem;">Email</th>
-                    <th style="padding: 1rem;">Role</th>
-                    <th style="padding: 1rem; border-radius: 0 8px 8px 0;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in users %}
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 1rem;">{{ u.id }}</td>
-                    <td style="padding: 1rem; font-weight: bold;">{{ u.username }}</td>
-                    <td style="padding: 1rem;">{{ u.email }}</td>
-                    <td style="padding: 1rem;">
-                        <span class="badge"
-                            style="background: {{ 'var(--secondary)' if u.role == 'doctor' else '#FFC107' if u.role == 'admin' else '#ddd' }}; padding: 5px 10px; border-radius: 12px; color: #333; font-size: 0.8rem;">{{
-                            u.role }}</span>
-                    </td>
-                    <td style="padding: 1rem;">
-                        <button class="cta-btn"
-                            style="background: #E91E63; padding: 5px 10px; font-size: 0.8rem;">Delete</button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- Admin Tabs -->
+    <div style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid #ddd; padding-bottom: 1rem;">
+        <button onclick="showTab('usersTab')" class="cta-btn" id="usersTabBtn"
+            style="background: var(--primary);">System Users</button>
+        <button onclick="showTab('feedbackTab')" class="cta-btn" id="feedbackTabBtn"
+            style="background: #ccc; color: #333;">AI Improvements Feedback</button>
+    </div>
+
+    <!-- Users Tab -->
+    <div id="usersTab">
+        <h3 style="margin-bottom: 1rem; color: #555;">Registered Users</h3>
+        <div style="overflow-x: auto;">
+            <table class="table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: var(--primary); color: white;">
+                        <th style="padding: 1rem; border-radius: 8px 0 0 8px;">ID</th>
+                        <th style="padding: 1rem;">Username</th>
+                        <th style="padding: 1rem;">Email</th>
+                        <th style="padding: 1rem;">Role</th>
+                        <th style="padding: 1rem; border-radius: 0 8px 8px 0;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 1rem;">{{ u.id }}</td>
+                        <td style="padding: 1rem; font-weight: bold;">{{ u.username }}</td>
+                        <td style="padding: 1rem;">{{ u.email }}</td>
+                        <td style="padding: 1rem;">
+                            <span class="badge"
+                                style="background: {{ 'var(--secondary)' if u.role == 'doctor' else '#FFC107' if u.role == 'admin' else '#ddd' }}; padding: 5px 10px; border-radius: 12px; color: #333; font-size: 0.8rem;">{{
+                                u.role }}</span>
+                        </td>
+                        <td style="padding: 1rem;">
+                            <button class="cta-btn"
+                                style="background: #E91E63; padding: 5px 10px; font-size: 0.8rem;">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Feedback Tab -->
+    <div id="feedbackTab" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="color: #555;">AI Support Feedback</h3>
+            <a href="{{ url_for('main.export_feedback') }}" class="cta-btn"
+                style="background: var(--primary); font-size: 0.8rem; padding: 8px 15px;">
+                <i class="fas fa-file-export"></i> Export to CSV
+            </a>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: var(--secondary); color: #2C3E50;">
+                        <th style="padding: 1rem; border-radius: 8px 0 0 8px;">User ID</th>
+                        <th style="padding: 1rem;">Comment / Problem</th>
+                        <th style="padding: 1rem;">Was Helpful?</th>
+                        <th style="padding: 1rem; border-radius: 0 8px 8px 0;">Improvement Tag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in feedbacks %}
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 1rem;">{{ f.user_id if f.user_id else 'Guest' }}</td>
+                        <td style="padding: 1rem; font-style: italic;">"{{ f.content }}"</td>
+                        <td style="padding: 1rem;">
+                            {% if f.helpful %}
+                            <span style="color: green;"><i class="fas fa-thumbs-up"></i> Yes</span>
+                            {% else %}
+                            <span style="color: red;"><i class="fas fa-thumbs-down"></i> No</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem;">
+                            <span
+                                style="font-size: 0.7rem; background: #eee; padding: 3px 8px; border-radius: 4px;">AI_REFINEMENT_NEEDED</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+
+<script>
+    function showTab(tabId) {
+        document.getElementById('usersTab').style.display = tabId === 'usersTab' ? 'block' : 'none';
+        document.getElementById('feedbackTab').style.display = tabId === 'feedbackTab' ? 'block' : 'none';
+
+        document.getElementById('usersTabBtn').style.background = tabId === 'usersTab' ? 'var(--primary)' : '#ccc';
+        document.getElementById('feedbackTabBtn').style.background = tabId === 'feedbackTab' ? 'var(--secondary)' : '#ccc';
+
+        // Update hash without scrolling
+        if (history.pushState) {
+            history.pushState(null, null, '#' + tabId);
+        } else {
+            location.hash = '#' + tabId;
+        }
+    }
+
+    // Auto-switch tab based on URL hash
+    window.addEventListener('load', function () {
+        if (window.location.hash === '#feedbackTab') {
+            showTab('feedbackTab');
+        } else {
+            showTab('usersTab');
+        }
+    });
+</script>
 {% endblock %}

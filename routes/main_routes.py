@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, session, redirect, url_for, flash, request
-from models.database import db, User, HealthTrend, Appointment
+from models.database import db, User, HealthTrend, Appointment, Feedback
 
 main_bp = Blueprint('main', __name__)
 
@@ -29,9 +29,39 @@ def doctor_dashboard():
 @main_bp.route('/admin_panel')
 def admin_panel():
     user = User.query.get(session['user_id'])
-    # In a real app check for user.role == 'admin'
+    # Security: Only allow admins
+    if user.role != 'admin':
+        flash('Access Denied: Admin only.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
     users = User.query.all()
-    return render_template('admin_panel.html', users=users)
+    feedbacks = Feedback.query.all()
+    return render_template('admin_panel.html', users=users, feedbacks=feedbacks)
+
+@main_bp.route('/export_feedback')
+def export_feedback():
+    user = User.query.get(session['user_id'])
+    if not user or user.role != 'admin':
+        return redirect(url_for('main.index'))
+
+    import csv
+    import io
+    from flask import make_response
+
+    feedbacks = Feedback.query.all()
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Feedback_ID', 'User_ID', 'Comment', 'Helpful_Status'])
+    
+    for f in feedbacks:
+        writer.writerow([f.id, f.user_id if f.user_id else 'Guest', f.content, 'Helpful' if f.helpful else 'Not Helpful'])
+
+    response = make_response(output.getvalue())
+    response.headers["Content-Disposition"] = "attachment; filename=aura_ai_feedback.csv"
+    response.headers["Content-type"] = "text/csv"
+    return response
 
 @main_bp.route('/create_appointment', methods=['GET', 'POST'])
 def create_appointment():
