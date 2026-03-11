@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - AuraHealth{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1400px; padding-top: 2rem;">
+    <div style="margin-bottom: 2.5rem;">
+        <h2 style="font-family: 'Outfit'; font-weight: 700; color: #334155; font-size: 1.85rem;">Hello, <span style="font-weight: 800; color: #1e293b;">{{ user.username }}!</span> <span style="font-weight: 500; font-size: 1.15rem; color: #94a3b8; margin-left: 0.5rem;">Here's your health summary.</span></h2>
+    </div>
+
+    <!-- Vitals Row Matching Reference Image -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 3rem;">
+        <!-- Heart Rate Card -->
+        <div class="card" style="background: #3b82f6; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 2rem; border-radius: 20px;">
+            <div style="font-size: 2.25rem; margin-bottom: 1rem;">🤍</div>
+            <div id="hr-val-main" style="font-size: 3.5rem; font-weight: 800; font-family: 'Outfit'; line-height: 1;">82 bpm</div>
+            <div style="font-size: 0.9rem; opacity: 0.95; font-weight: 600; margin-top: 1rem;">Heart Rate</div>
+        </div>
+
+        <!-- Body Temp Card -->
+        <div class="card" style="background: #f87171; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 2rem; border-radius: 20px;">
+            <div style="font-size: 2.25rem; margin-bottom: 1rem;">🌡️</div>
+            <div id="temp-val-main" style="font-size: 2.5rem; font-weight: 800; font-family: 'Outfit';">98.6 °F</div>
+            <div style="font-size: 0.9rem; opacity: 0.95; font-weight: 600; margin-top: 1rem;">Body Temp</div>
+        </div>
+
+        <!-- SpO2 Card -->
+        <div class="card" style="background: #14b8a6; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 2rem; border-radius: 20px;">
+            <div style="font-size: 2.25rem; margin-bottom: 1rem;">🫁</div>
+            <div id="spo2-val-main" style="font-size: 2.5rem; font-weight: 800; font-family: 'Outfit';">98 %</div>
+            <div style="font-size: 0.9rem; opacity: 0.95; font-weight: 600; margin-top: 1rem;">SpO2 Level</div>
+        </div>
+
+        <!-- Blood Pressure Card -->
+        <div class="card" style="background: #fbbf24; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 2rem; border-radius: 20px;">
+            <div style="font-size: 2.25rem; margin-bottom: 1rem;">⏲️</div>
+            <div id="bp-val-main" style="font-size: 2.5rem; font-weight: 800; font-family: 'Outfit';">120/80</div>
+            <div style="font-size: 0.9rem; opacity: 0.95; font-weight: 600; margin-top: 1rem;">Blood Pressure</div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <!-- Left: Health Trends Graph -->
+        <div class="card" style="padding: 2rem; height: 500px; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h3 style="font-size: 1.5rem; color: #1e293b;">Health Trends</h3>
+                <div style="display: flex; gap: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600;">
+                        <span style="width: 25px; height: 3px; background: #3b82f6; border-radius: 2px;"></span> Heart Rate (bpm)
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600;">
+                        <span style="width: 25px; height: 3px; background: #14b8a6; border-radius: 2px;"></span> SpO2 (%)
+                    </div>
+                </div>
+            </div>
+            <div style="flex-grow: 1; min-height: 0;">
+                <canvas id="healthChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Right: Modules -->
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="card" style="padding: 2rem;">
+                <h3 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Next Appointment</h3>
+                <p style="color: #94a3b8; font-size: 1rem; margin-bottom: 1.5rem;">No upcoming appointments.</p>
+                <button class="btn" style="width: auto; padding: 0.75rem 1.5rem; background: #3b82f6;">Book Now</button>
+            </div>
+            
+            <div class="card" style="padding: 2rem; position: relative;">
+                <h3 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Medications</h3>
+                <p style="color: #94a3b8; font-size: 1rem;">No reminders set.</p>
+                
+                <!-- Circular SOS Button as shown in image -->
+                <button id="sosBtn" style="position: absolute; bottom: 20px; right: 20px; width: 60px; height: 60px; border-radius: 50%; background: #ef4444; border: none; color: white; font-weight: 900; font-size: 0.9rem; cursor: pointer; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3); animation: pulse 2s infinite;">SOS</button>
+            </div>
+        </div>
+    </div>
+/div>
+            </div>
+
+            <!-- Focus Module -->
+            {% if next_due_task %}
+            <div class="card" style="margin-top: 2.5rem; padding: 2.5rem; text-align: center; background: #faf5ff; border: 2px solid #f3e8ff;">
+                <h4 style="color: var(--accent-color); font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1.5rem;">Critical Priority</h4>
+                <h3 style="font-size: 1.5rem; font-family: 'Outfit'; margin-bottom: 2rem;">{{ next_due_task.title }}</h3>
+                
+                <div class="circular-timer" id="focusTimer" data-due-date="{{ next_due_task.due_date|date:'c' }}" style="margin-bottom: 2rem;">
+                    <svg viewBox="0 0 160 160">
+                        <circle class="bg-circle" cx="80" cy="80" r="70" style="stroke: #e9d5ff; stroke-width: 6;"></circle>
+                        <circle class="progress-circle" cx="80" cy="80" r="70" style="stroke: var(--accent-color); stroke-width: 10;"></circle>
+                    </svg>
+                    <div class="timer-text" id="focusTimerText" style="font-size: 1.75rem; font-family: 'Outfit'; color: var(--accent-color);">00:00:00</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- SOS Script & Logic -->
+    <script>
+        document.getElementById('sosBtn').addEventListener('click', async function() {
+            if (confirm('EMERGENCY: Are you sure you want to trigger a Global Rescue Alert? This will ping medical administrators and linked family members.')) {
+                try {
+                    const response = await fetch('/trigger-sos/', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    if (response.ok) {
+                        alert('CRITICAL: SOS ALERT TRANSMITTED. Help has been dispatched.');
+                        document.getElementById('sos-buzzer').play();
+                    }
+                } catch (e) {
+                    alert('Protocol Failed. Call emergency services manually.');
+                }
+            }
+        });
+
+    // Chart.js Premium Initialization
+    const ctx = document.getElementById('healthChart').getContext('2d');
+    
+    let healthChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'Heart Rate',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    borderWidth: 3,
+                    pointRadius: 2,
+                    tension: 0.4,
+                    fill: false
+                },
+                {
+                    label: 'SpO2',
+                    data: [],
+                    borderColor: '#14b8a6',
+                    borderWidth: 3,
+                    pointRadius: 2,
+                    tension: 0.4,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { 
+                y: { 
+                    beginAtZero: false,
+                    grid: { color: '#f1f5f9' },
+                    ticks: { color: '#94a3b8' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#94a3b8' }
+                }
+            }
+        }
+    });
+
+    async function loadHealthData() {
+        try {
+            const response = await fetch('/health-data/');
+            const data = await response.json();
+            
+            // Update Top Cards
+            document.getElementById('hr-val-main').innerText = data.latest_vitals.hr + ' bpm';
+            document.getElementById('temp-val-main').innerText = data.latest_vitals.temp + ' °F';
+            document.getElementById('spo2-val-main').innerText = data.latest_vitals.spo2 + ' %';
+            document.getElementById('bp-val-main').innerText = data.latest_vitals.bp;
+
+            // Update Chart
+            healthChart.data.labels = data.labels;
+            healthChart.data.datasets[0].data = data.hr_values;
+            healthChart.data.datasets[1].data = data.spo2_values;
+            healthChart.update();
+        } catch (e) { console.error(e); }
+    }
+
+    loadHealthData();
+    </script>
+
+    <style>
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .task-card:hover { border-color: var(--primary-color) !important; transform: scale(1.01); }
+    </style>
+</div>
+<script src="{% static 'js/reminders.js' %}"></script>
+{% endblock %}

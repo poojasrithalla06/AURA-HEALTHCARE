@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Operational Monitoring - AuraHealth{% endblock %}
+
+{% block content %}
+<style>
+    .admin-card:hover { transform: translateY(-5px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.08); }
+    .sos-item { background: #fff1f2; border: 1px solid #ffe4e6; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .sos-item:hover { background: #fef2f2; border-color: #ef4444; box-shadow: 0 10px 20px -5px rgba(239, 68, 68, 0.15); transform: scale(1.01); }
+    .vitals-row:hover { background: #f8fafc; color: var(--primary-color) !important; }
+</style>
+
+<div class="container">
+    <div class="dashboard-header" style="margin: 4rem 0; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div>
+            <h2 style="font-size: 3.5rem; font-family: 'Outfit'; font-weight: 800; color: var(--text-main); letter-spacing: -0.06em; margin-bottom: 0.5rem;">Pulse Control <span style="color: var(--primary-color);">Panel</span></h2>
+            <p style="color: var(--text-muted); font-size: 1.25rem; font-weight: 500;">Real-time health monitoring of all synchronized neural endpoints.</p>
+        </div>
+        <div style="background: #eff6ff; padding: 0.6rem 1.5rem; border-radius: 12px; border: 1px solid #dbeafe; display: flex; align-items: center; gap: 0.75rem;">
+            <div style="width: 10px; height: 10px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite;"></div>
+            <span style="font-size: 0.9rem; font-weight: 800; color: #1e40af; letter-spacing: 0.05em; text-transform: uppercase;">ADMINISTRATIVE STREAM LIVE</span>
+        </div>
+    </div>
+
+    <!-- Active SOS Alerts Section -->
+    <div class="card admin-card" style="border: none; background: #ffffff; border-left: 10px solid #ef4444; margin-bottom: 4rem; padding: 4rem; box-shadow: 0 15px 30px -5px rgba(239, 68, 68, 0.1);">
+        <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 3.5rem;">
+            <div style="font-size: 3rem; background: #fef2f2; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 20px; border: 1px solid #fee2e2;">🚨</div>
+            <div>
+                <h3 style="color: #ef4444; margin: 0; font-family: 'Outfit'; font-size: 2.5rem; font-weight: 800; letter-spacing: -0.04em;">Critical SOS Intercepts</h3>
+                <p style="margin-top: 0.25rem; color: #991b1b; font-weight: 600; font-size: 1.1rem; opacity: 0.7;">Active emergency triggers requiring immediate escalation.</p>
+            </div>
+        </div>
+
+        {% if active_alerts %}
+        <div style="display: grid; gap: 2rem;">
+            {% for alert in active_alerts %}
+            <div class="sos-item" style="padding: 2.5rem; border-radius: 24px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 2rem;">
+                    <div style="width: 70px; height: 70px; background: #ffffff; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 2rem; color: #ef4444; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.1); border: 2px solid #ef4444;">
+                        {{ alert.user.username|first|upper }}
+                    </div>
+                    <div>
+                        <strong style="font-size: 1.75rem; font-family: 'Outfit'; font-weight: 800; color: #1e293b;">{{ alert.user.username }}</strong>
+                        <div style="display: flex; align-items: center; gap: 0.75rem; color: #ef4444; font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.25rem;">
+                            <span>⚠️ PROTOCOL VIOLATION</span> &bull; <span>PRIORITY 1</span>
+                        </div>
+                        <div style="font-size: 0.95rem; color: #64748b; margin-top: 0.75rem; font-weight: 600;">Intercepted At: {{ alert.created_at|date:"M d, Y H:i:s" }}</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1.25rem;">
+                    <button class="btn" style="width: auto; background: #10b981; font-size: 1rem; padding: 1.25rem 2.5rem; border-radius: 14px; font-weight: 800; letter-spacing: 0.05em; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.2);">RESOLVE</button>
+                    <button class="btn" style="width: auto; background: var(--primary-color); font-size: 1rem; padding: 1.25rem 2.5rem; border-radius: 14px; font-weight: 800; letter-spacing: 0.05em; box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.2);">LIVE TRANSMISSION</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 6rem 2rem; border: 3px dashed #f1f5f9; border-radius: 28px;">
+            <div style="font-size: 5rem; margin-bottom: 2rem; opacity: 0.1;">🛡️</div>
+            <h3 style="color: #94a3b8; font-family: 'Outfit'; font-size: 1.75rem; font-weight: 700;">No Active Emergencies</h3>
+            <p style="color: #cbd5e1; font-weight: 600; font-size: 1.15rem;">Neural safety shields are holding across the entire network cluster.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Secondary Admin Layout -->
+    <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 3.5rem;">
+        <!-- Analytics & Risk Score Feed -->
+        <div>
+            <div class="card admin-card" style="margin-bottom: 3rem; padding: 3.5rem;">
+                <h3 style="margin-bottom: 3.5rem; font-family: 'Outfit'; font-size: 2rem; font-weight: 800; letter-spacing: -0.04em;">System Telemetry</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div style="padding: 2.5rem 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 24px; text-align: center;">
+                        <div style="font-size: 3.5rem; font-weight: 900; color: var(--primary-color); font-family: 'Outfit'; letter-spacing: -0.05em;">{{ users_count }}</div>
+                        <div style="font-size: 0.85rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; margin-top: 0.5rem;">Synchronized Patients</div>
+                    </div>
+                    <div style="padding: 2.5rem 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 24px; text-align: center;">
+                        <div style="font-size: 3.5rem; font-weight: 900; color: #ef4444; font-family: 'Outfit'; letter-spacing: -0.05em;">{{ total_alerts }}</div>
+                        <div style="font-size: 0.85rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; margin-top: 0.5rem;">Cumulative SOS</div>
+                    </div>
+                </div>
+                
+                <h4 style="margin-top: 5rem; margin-bottom: 2rem; font-family: 'Outfit'; font-size: 1.5rem; font-weight: 800; color: #1e293b;">Biometric Risk Priority</h4>
+                <div style="display: grid; gap: 1rem;">
+                    {% for pred in predictions %}
+                    <div style="padding: 1.5rem 2rem; background: #f8fafc; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; transition: all 0.2s ease;" class="vitals-row">
+                        <span style="font-weight: 800; font-family: 'Outfit'; color: #475569;">{{ pred.user.username }}</span>
+                        {% if pred.risk_score > 50 %}
+                        <div style="background: #fef2f2; color: #ef4444; padding: 0.5rem 1.25rem; border-radius: 12px; font-weight: 900; border: 1px solid #fee2e2;">{{ pred.risk_score }}%</div>
+                        {% else %}
+                        <div style="background: #f0fdf4; color: #10b981; padding: 0.5rem 1.25rem; border-radius: 12px; font-weight: 900; border: 1px solid #dcfce7;">{{ pred.risk_score }}%</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Global Real-time Stream -->
+        <div class="card admin-card" style="padding: 3.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3.5rem;">
+                <h3 style="margin: 0; font-family: 'Outfit'; font-size: 2rem; font-weight: 800; letter-spacing: -0.04em;">Global Biometric Stream</h3>
+                <span style="font-size: 0.75rem; background: #f1f5f9; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 800; color: #64748b;">LATENCY: 42ms</span>
+            </div>
+            <div style="max-height: 800px; overflow-y: auto; padding-right: 0.75rem;">
+                {% if recent_metrics %}
+                <table style="width: 100%; border-collapse: separate; border-spacing: 0 1rem; font-size: 1.1rem;">
+                    <thead style="position: sticky; top: 0; background: #ffffff; z-index: 10;">
+                        <tr style="text-align: left;">
+                            <th style="padding: 0 1rem 1.5rem 1rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.12em;">Endpoint</th>
+                            <th style="padding: 0 1rem 1.5rem 1rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.12em;">Protocol</th>
+                            <th style="padding: 0 1rem 1.5rem 1rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.12em;">Intercept</th>
+                            <th style="padding: 0 1rem 1.5rem 1rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.12em; text-align: right;">Stream Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in recent_metrics %}
+                        <tr style="background: #f8fafc; border-radius: 16px; transition: all 0.2s ease;" class="vitals-row">
+                            <td style="padding: 1.5rem 1rem; font-weight: 800; color: #1e293b; border-radius: 16px 0 0 16px;">{{ m.user.username }}</td>
+                            <td style="padding: 1.5rem 1rem; color: #64748b; font-weight: 600;">{{ m.get_metric_type_display }}</td>
+                            <td style="padding: 1.5rem 1rem; font-weight: 900; color: var(--primary-color);">{{ m.value }}</td>
+                            <td style="padding: 1.5rem 1rem; font-size: 0.95rem; color: #94a3b8; text-align: right; border-radius: 0 16px 16px 0; font-weight: 700;">{{ m.recorded_at|date:"H:i:s" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div style="text-align: center; padding: 10rem 2rem; border: 2px dashed #f1f5f9; border-radius: 20px;">
+                    <p style="color: #cbd5e1; font-weight: 600; font-size: 1.25rem;">Waiting for incoming biometric data streams...</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    setTimeout(() => {
+        window.location.reload();
+    }, 30000); // 30 second refresh for admin priority
+</script>
+{% endblock %}

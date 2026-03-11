@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - AuraHealth{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin-top: 3rem;">
+    <div class="card" style="padding: 4rem; background: #ffffff; border: 1px solid #f1f5f9; box-shadow: var(--shadow-premium); border-radius: 24px;">
+        <div style="text-align: center; margin-bottom: 4rem;">
+            <div class="letter-avatar letter-avatar-lg" style="margin: 0 auto; width: 140px; height: 140px; font-size: 4rem; font-family: 'Outfit';">
+                {{ user.username|first|upper }}
+            </div>
+            <h2 style="margin-top: 2rem; font-size: 3rem; font-family: 'Outfit'; font-weight: 800; color: var(--text-main); letter-spacing: -0.04em;">{{ user.username }}</h2>
+            <p style="color: var(--text-muted); font-size: 1.25rem; font-weight: 500;">{{ user.email }}</p>
+            <div style="margin-top: 1rem; display: inline-block; padding: 0.4rem 1rem; background: #f0fdf4; color: #166534; border-radius: 20px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; border: 1px solid #dcfce7;">Verified Account</div>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <h3 style="margin-bottom: 2.5rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 1rem; font-family: 'Outfit'; font-size: 1.15rem; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 800;">
+                Account Identity</h3>
+
+            <div class="form-group" style="margin-bottom: 1.75rem;">
+                <label style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; display: block; font-weight: 700;">Username</label>
+                {{ u_form.username }}
+            </div>
+            <div class="form-group" style="margin-bottom: 2.5rem;">
+                <label style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; display: block; font-weight: 700;">Email Address</label>
+                {{ u_form.email }}
+            </div>
+
+            <button type="submit" class="btn" style="border-radius: 14px; padding: 1.25rem; font-weight: 800; font-size: 1.1rem;">UPDATE INFORMATION</button>
+        </form>
+
+        <div style="margin-top: 4rem; border-top: 1px solid #f1f5f9; padding-top: 3rem; text-align: center;">
+            <a href="{% url 'password_change' %}" class="btn" style="background: #ffffff; color: var(--text-main); border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); width: auto; display: inline-flex; border-radius: 12px; padding: 1rem 2rem; font-weight: 700;">
+                🔒 Update Security Credentials
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

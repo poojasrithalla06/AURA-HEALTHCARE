@@ -15,38 +15,50 @@
 
 <body>
 
-    <nav class="navbar glass-card">
-        <a href="{{ url_for('main.dashboard') if session.get('user_id') else url_for('main.index') }}"
-            class="navbar-brand">
-            <i class="fas fa-heartbeat" style="color: var(--accent); margin-right: 10px;"></i> AuraHealth
+    <nav class="navbar">
+        <a href="{{ url_for('main.dashboard') if session.get('user_id') else url_for('main.index') }}" class="navbar-brand">
+            <div style="width: 38px; height: 38px; background: #1e293b; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">🧬</div>
+            <span>Aura<span style="color: var(--primary-color);">Health</span></span>
         </a>
-        <div class="navbar-nav">
+        
+        <ul class="nav-links">
             {% if session.get('user_id') %}
-            <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('main.chatbot') }}">AI Chat</a>
+            <li><a href="{{ url_for('main.dashboard') }}"><span class="nav-icon">📊</span><span>Dashboard</span></a></li>
+            <li><a href="{{ url_for('main.chatbot') }}"><span class="nav-icon">🤖</span><span>AI Assistant</span></a></li>
+            <li><a href="{{ url_for('main.report') }}"><span class="nav-icon">📄</span><span>Reports</span></a></li>
+            <li><a href="{{ url_for('main.appointment') }}"><span class="nav-icon">📅</span><span>Booking</span></a></li>
             {% if session.get('role') == 'doctor' %}
-            <a href="{{ url_for('main.doctor_dashboard') }}">Doc Panel</a>
+            <li><a href="{{ url_for('main.doctor_dashboard') }}"><span class="nav-icon">👨‍⚕️</span><span>Doc Panel</span></a></li>
             {% elif session.get('role') == 'admin' %}
-            <a href="{{ url_for('main.admin_panel') }}">Admin Dashboard</a>
-            <a href="{{ url_for('main.admin_panel') }}#feedbackTab"
-                style="color: var(--secondary); font-weight: bold;">AI Feedback</a>
+            <li><a href="{{ url_for('main.admin_panel') }}"><span class="nav-icon">⚙️</span><span>Admin</span></a></li>
             {% endif %}
-            <a href="{{ url_for('main.report') }}">My Report</a>
-            <a href="{{ url_for('auth.logout') }}" style="color: var(--accent);">Logout</a>
+
+            <li style="margin-left: 1rem; border-left: 1px solid var(--border-color); padding-left: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div class="letter-avatar-sm">
+                        {{ session.get('username', 'U')[0]|upper }}
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                        <span style="font-size: 0.65rem; color: #94a3b8; font-weight: 500;">Hi,</span>
+                        <span style="font-size: 0.85rem; color: #1e293b; font-weight: 700; margin-top: -2px;">{{ session.get('username', 'User') }}</span>
+                    </div>
+                </div>
+            </li>
+            <li>
+                <a href="{{ url_for('auth.logout') }}" class="btn-logout">Logout</a>
+            </li>
+            <li style="margin-left: 0.5rem;">
+                <select id="languageSelect" class="form-select" onchange="changeLanguage()" style="padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.75rem; border: 1px solid var(--border-color); color: #475569; font-weight: 600;">
+                    <option value="en">Eng</option>
+                    <option value="hi">Hin</option>
+                    <option value="te">Tel</option>
+                </select>
+            </li>
             {% else %}
-            <a href="{{ url_for('auth.login') }}">Login</a>
-            <a href="{{ url_for('auth.signup') }}" class="cta-btn" style="margin-left: 1rem;">Sign Up</a>
+            <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+            <li style="margin-left: 1rem;"><a href="{{ url_for('auth.signup') }}" class="cta-btn" style="padding: 0.6rem 1.25rem; border-radius: 12px; font-size: 0.85rem;">Get Started</a></li>
             {% endif %}
-            <select id="languageSelect" class="form-select" onchange="changeLanguage()"
-                style="margin-left: 1rem; border-radius: 20px; padding: 5px;">
-                <option value="en">English</option>
-                <option value="hi">Hindi</option>
-                <option value="te">Telugu</option>
-                <option value="mr">Marathi</option>
-                <option value="ml">Malayalam</option>
-                <option value="ta">Tamil</option>
-            </select>
-        </div>
+        </ul>
     </nav>
 
     <div class="container" style="min-height: 80vh; padding: 2rem;">

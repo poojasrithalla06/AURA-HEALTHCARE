@@ -21,8 +21,8 @@ AuraHealth is a modern, full-stack healthcare web application designed to act as
 *   **Frontend**: HTML5, CSS3 (Glassmorphism), JavaScript (Vanilla), Chart.js
 *   **Backend**: Python, Flask
 *   **Database**: SQLite (SQLAlchemy ORM)
-*   **AI/ML**: Scikit-learn (Simulated for demo), NLTK (Chatbot logic)
-*   **Deployment**: Render / Gunicorn
+*   **AI/ML**: Custom Rule-indexed NLP (Multi-language), Heuristic Health Risk Analytics
+*   **Deployment**: Gunicorn / Render / (Supports Heroku)
 
 ## 📦 Installation
 
@@ -30,18 +30,18 @@ To run this project locally:
 
 1.  **Clone the repository**
     ```bash
-    git clone https://github.com/poojasrithalla06/AURA-HEALTHCARE-ASSISTENT.git
-    cd AURA-HEALTHCARE-ASSISTENT
+    git clone https://github.com/poojasrithalla06/AURA-HEALTHCARE.git
+    cd AURA-HEALTHCARE
     ```
 
 2.  **Install dependencies**
     ```bash
-    pip install -r aura_health/requirements.txt
+    python -m pip install -r requirements.txt
     ```
 
 3.  **Run the application**
     ```bash
-    python aura_health/app.py
+    python app.py
     ```
 
 4.  **Access the App**

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - AuraHealth{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 750px; margin-top: 4rem;">
+    <div class="card" style="padding: 4rem; background: #ffffff; border: 1px solid #f1f5f9; box-shadow: var(--shadow-premium); border-radius: 24px;">
+        <div style="margin-bottom: 3.5rem; text-align: center;">
+            <div style="width: 60px; height: 60px; background: #f0f9ff; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--primary-color); margin: 0 auto 2rem; font-size: 1.75rem;">📝</div>
+            <h2 style="font-family: 'Outfit'; font-size: 2.75rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.05em; margin-bottom: 0.75rem;">{{ title }}</h2>
+            <p style="color: var(--text-muted); font-size: 1.1rem; font-weight: 500;">Define your next physiological or operational protocol.</p>
+        </div>
+
+        <form method="post" id="task-form">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group" style="margin-bottom: 2rem;">
+                <label style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.75rem; display: block; font-weight: 700;">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                <small style="color: #64748b; font-size: 0.75rem; display: block; margin-top: 0.5rem; line-height: 1.5; padding: 0.5rem 1rem; background: #f8fafc; border-radius: 8px;">{{ field.help_text }}</small>
+                {% endif %}
+                {% for error in field.errors %}
+                <div style="color: #ef4444; font-size: 0.85rem; margin-top: 0.75rem; font-weight: 700; background: #fef2f2; padding: 0.75rem; border-radius: 8px; border: 1px solid #fee2e2;">⚠️ {{ error }}</div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            <div style="display: flex; gap: 1.5rem; margin-top: 3rem;">
+                <button type="submit" class="btn" style="border-radius: 14px; font-weight: 800; padding: 1.25rem; font-size: 1.1rem; letter-spacing: 0.05em;">SYNCHRONIZE TASK</button>
+                <a href="{% url 'dashboard' %}" class="btn"
+                    style="background: #ffffff; color: var(--text-main); border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-radius: 14px; font-weight: 700; padding: 1.25rem; text-decoration: none;">ABORT</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Family Network - AuraHealth{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header" style="margin: 3rem 0;">
+        <div>
+            <h2 style="font-size: 3rem; font-family: 'Outfit'; font-weight: 800; letter-spacing: -0.05em; color: var(--text-main);">Guardian Network</h2>
+            <p style="color: var(--text-muted); font-size: 1.15rem;">Emergency response synchronization for absolute peace of mind.</p>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 3rem;">
+        <!-- Left: Add Guardian -->
+        <div>
+            <div class="card" style="margin: 0; position: sticky; top: 120px; padding: 2.5rem; background: #ffffff; border: 1px solid #f1f5f9; box-shadow: var(--shadow-premium);">
+                <h3 style="margin-bottom: 2rem; font-family: 'Outfit'; font-weight: 700; color: var(--text-main);">Authorize Connection</h3>
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; display: block; font-weight: 700;">{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn" style="border-radius: 12px; padding: 1.25rem; font-weight: 800;">LINK GUARDIAN</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right: Active Guardians -->
+        <div>
+            <div class="card" style="margin: 0; padding: 3rem; background: #ffffff; border: 1px solid #f1f5f9; box-shadow: var(--shadow-premium);">
+                <h3 style="margin-bottom: 3rem; font-family: 'Outfit'; font-weight: 700; color: var(--text-main);">Authenticated Guardians</h3>
+                {% if contacts %}
+                <div style="display: grid; gap: 1.5rem;">
+                    {% for contact in contacts %}
+                    <div style="padding: 2rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease;" class="guardian-card">
+                        <div style="display: flex; align-items: center; gap: 1.5rem;">
+                            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); color: white; display: flex; align-items: center; justify-content: center; border-radius: 16px; font-weight: 900; font-size: 1.5rem; font-family: 'Outfit'; box-shadow: 0 8px 15px rgba(14, 165, 233, 0.2);">
+                                {{ contact.name|first|upper }}
+                            </div>
+                            <div>
+                                <div style="font-weight: 800; font-size: 1.35rem; color: var(--text-main); font-family: 'Outfit';">{{ contact.name }}</div>
+                                <div style="color: var(--text-muted); font-size: 1rem; margin-top: 0.25rem;">{{ contact.phone_number }}</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                            <span style="background: #ecfdf5; color: #10b981; padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.75rem; font-weight: 800; border: 1px solid #d1fae5;">ENCRYPTED LINK</span>
+                            <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">SMS Priority: Immediate</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div style="text-align: center; padding: 6rem 2rem; border: 2px dashed #e2e8f0; border-radius: 24px;">
+                    <div style="font-size: 4rem; margin-bottom: 2rem; opacity: 0.3;">🤝</div>
+                    <p style="color: var(--text-muted); font-size: 1.15rem; line-height: 1.7; max-width: 450px; margin: 0 auto;">Your emergency network is currently offline. Add authorized guardians to synchronize your safety protocols.</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="card" style="margin-top: 3rem; background: #eff6ff; border: 1px solid #dbeafe; padding: 2.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);">
+                <h4 style="margin-top: 0; color: var(--primary-color); font-family: 'Outfit'; font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                    <span style="font-size: 1.5rem;">🛡️</span> Sentinel Response System
+                </h4>
+                <p style="font-size: 1.1rem; color: #1e3a8a; line-height: 1.8; margin-top: 1rem;">If the Aura Neural Engine detects a health risk factor exceeding <strong>75%</strong>, an automated emergency SOS sequence is triggered across your Guardian Network with real-time biometric pings.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .guardian-card:hover { transform: translateY(-3px); border-color: var(--primary-color) !important; background: #ffffff !important; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+</style>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Concierge - AuraHealth{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px;">
+    <div class="dashboard-header" style="margin: 3rem 0;">
+        <div>
+            <h2 style="font-size: 3rem; font-family: 'Outfit'; font-weight: 800; letter-spacing: -0.05em; color: var(--text-main);">AI Health Concierge</h2>
+            <p style="color: var(--text-muted); font-size: 1.15rem;">Intelligent diagnostic support and wellness guidance.</p>
+        </div>
+    </div>
+
+    <div class="card" style="height: 650px; display: flex; flex-direction: column; padding: 2.5rem; background: #ffffff; border: 1px solid #f1f5f9; box-shadow: var(--shadow-premium); border-radius: 24px;">
+        <div id="chat-messages" style="flex: 1; overflow-y: auto; margin-bottom: 2.5rem; padding-right: 1rem; display: flex; flex-direction: column;">
+            <div class="message-aura" style="background: #f8fafc; border: 1px solid #e2e8f0; color: var(--text-main); padding: 1.5rem; border-radius: 1.5rem 1.5rem 1.5rem 0; margin-bottom: 1.75rem; align-self: flex-start; max-width: 80%; line-height: 1.6; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);">
+                <div style="color: var(--primary-color); font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; font-family: 'Outfit';">Aura Intelligence</div>
+                Greetings. I am Aura, your dedicated health intelligence. Please describe any symptoms or wellness objectives you wish to discuss.
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; background: #f1f5f9; padding: 0.75rem; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.05);">
+            <input type="text" id="user-input" placeholder="Consult with Aura (e.g., 'Headache for 3 hours')..." 
+                   style="flex: 1; padding: 0.75rem 1.5rem; border: none !important; background: transparent !important; color: var(--text-main) !important; font-size: 1rem; outline: none !important; box-shadow: none !important;">
+            <button id="send-btn" class="btn" style="width: auto; padding: 0 2.5rem; border-radius: 14px; height: 50px; font-weight: 800; letter-spacing: 0.05em;">SEND</button>
+        </div>
+    </div>
+    
+    <div style="display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin-top: 3rem;">
+        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">Neural Processing:</span>
+        <span style="font-size: 0.85rem; color: var(--text-main); background: #ffffff; border: 1px solid #e2e8f0; padding: 0.4rem 1rem; border-radius: 8px; font-family: 'Outfit';">English</span>
+        <span style="font-size: 0.85rem; color: var(--text-main); background: #ffffff; border: 1px solid #e2e8f0; padding: 0.4rem 1rem; border-radius: 8px; font-family: 'Outfit';">हिन्दी</span>
+        <span style="font-size: 0.85rem; color: var(--text-main); background: #ffffff; border: 1px solid #e2e8f0; padding: 0.4rem 1rem; border-radius: 8px; font-family: 'Outfit';">తెలుగు</span>
+    </div>
+
+    <div style="text-align: center; margin-top: 4rem; padding: 2rem; background: #fff1f2; border-radius: 16px; border: 1px solid #ffe4e6;">
+        <p style="color: #be123c; font-size: 0.9rem; font-weight: 500; margin: 0; line-height: 1.6;">
+            ⚠️ <strong>CRITICAL DATA:</strong> Aura provides AI-driven wellness guidance and predictive analysis only. In case of acute medical emergencies, immediately contact specialized medical responders.
+        </p>
+    </div>
+</div>
+
+<script>
+    const chatMessages = document.getElementById('chat-messages');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    function addMessage(sender, text, type) {
+        const msgDiv = document.createElement('div');
+        msgDiv.style.padding = '1.5rem';
+        msgDiv.style.marginBottom = '1.75rem';
+        msgDiv.style.maxWidth = '80%';
+        msgDiv.style.lineHeight = '1.7';
+        msgDiv.style.fontSize = '1rem';
+        msgDiv.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+        msgDiv.style.opacity = '0';
+        msgDiv.style.transform = 'translateY(10px)';
+        
+        if (type === 'user') {
+            msgDiv.style.background = 'linear-gradient(135deg, var(--primary-color), var(--accent-color))';
+            msgDiv.style.color = 'white';
+            msgDiv.style.alignSelf = 'flex-end';
+            msgDiv.style.borderRadius = '1.5rem 1.5rem 0 1.5rem';
+            msgDiv.style.boxShadow = '0 10px 25px rgba(14, 165, 233, 0.25)';
+            msgDiv.innerHTML = `<div style="font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; opacity: 0.9; font-family: 'Outfit';">User Client</div>${text}`;
+        } else {
+            msgDiv.style.background = '#f8fafc';
+            msgDiv.style.border = '1px solid #e2e8f0';
+            msgDiv.style.color = 'var(--text-main)';
+            msgDiv.style.alignSelf = 'flex-start';
+            msgDiv.style.borderRadius = '1.5rem 1.5rem 1.5rem 0';
+            msgDiv.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.02)';
+            msgDiv.innerHTML = `<div style="color: var(--primary-color); font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; font-family: 'Outfit';">Aura Response</div>${text}`;
+        }
+        
+        chatMessages.appendChild(msgDiv);
+        
+        // Trigger animation
+        setTimeout(() => {
+            msgDiv.style.opacity = '1';
+            msgDiv.style.transform = 'translateY(0)';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 10);
+    }
+
+    async function handleSend() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        addMessage('You', text, 'user');
+        userInput.value = '';
+
+        try {
+            const response = await fetch('{% url "ai_response" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ message: text })
+            });
+
+            const data = await response.json();
+            addMessage('Aura', data.response, 'aura');
+        } catch (error) {
+            addMessage('Aura', "Protocol failure. Unable to synchronize with Aura neural cluster at this time.", 'aura');
+        }
+    }
+
+    sendBtn.addEventListener('click', handleSend);
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleSend();
+    });
+</script>
+{% endblock %}

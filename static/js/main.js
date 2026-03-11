@@ -30,27 +30,37 @@ document.addEventListener('DOMContentLoaded', function () {
                 datasets: [{
                     label: 'Heart Rate (bpm)',
                     data: [72, 75, 70, 68, 74, 71, 73],
-                    borderColor: '#4A90E2',
-                    backgroundColor: 'rgba(74, 144, 226, 0.1)',
-                    fill: true,
-                    tension: 0.4
+                    borderColor: '#3b82f6',
+                    borderWidth: 3,
+                    pointRadius: 3,
+                    tension: 0.4,
+                    fill: false
                 }, {
                     label: 'SpO2 (%)',
                     data: [98, 97, 99, 98, 97, 98, 99],
-                    borderColor: '#50E3C2',
-                    backgroundColor: 'rgba(80, 227, 194, 0.1)',
-                    fill: true,
-                    tension: 0.4
+                    borderColor: '#14b8a6',
+                    borderWidth: 3,
+                    pointRadius: 3,
+                    tension: 0.4,
+                    fill: false
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'top' },
+                    legend: { display: false },
                 },
                 scales: {
-                    y: { beginAtZero: false } // Vitals don't start at 0 usually
+                    y: { 
+                        beginAtZero: false,
+                        grid: { color: '#f1f5f9' },
+                        ticks: { color: '#94a3b8' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8' }
+                    }
                 }
             }
         });

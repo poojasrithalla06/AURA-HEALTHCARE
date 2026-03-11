@@ -1,48 +1,59 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container-fluid" style="padding-top: 2rem;">
-    <h2 style="margin-bottom: 2rem; color: #444;">Hello, {{ user.username }}! <span
-            style="font-size: 1rem; color: #888;">Here's your health summary.</span></h2>
+<div class="container" style="max-width: 1400px; padding-top: 2rem;">
+    <div style="margin-bottom: 2.5rem;">
+        <h2 style="font-family: 'Outfit'; font-weight: 700; color: #334155; font-size: 1.85rem;">Hello, <span style="font-weight: 800; color: #1e293b;">{{ session.get('username', 'User') }}!</span> <span style="font-weight: 500; font-size: 1.15rem; color: #94a3b8; margin-left: 0.5rem;">Here's your health summary.</span></h2>
+    </div>
 
-    <div class="row" style="display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 3rem;">
-        <!-- Vitals Cards -->
-        <div class="col glass-card stat-card" style="flex: 1; min-width: 250px;">
-            <i class="fas fa-heartbeat fa-2x" style="margin-bottom: 1rem;"></i>
-            <h3>72 bpm</h3>
-            <p>Heart Rate</p>
+    <!-- Vitals Row Matching Reference Image -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 3rem;">
+        <!-- Heart Rate Card -->
+        <div class="card" style="background: #3b82f6; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 2rem; border-radius: 20px;">
+            <div style="font-size: 2.25rem; margin-bottom: 1rem;">🤍</div>
+            <div id="hr-val-main" style="font-size: 3.5rem; font-weight: 800; font-family: 'Outfit'; line-height: 1;">82 bpm</div>
+            <div style="font-size: 0.9rem; opacity: 0.95; font-weight: 600; margin-top: 1rem;">Heart Rate</div>
         </div>
-        <div class="col glass-card stat-card" style="background: linear-gradient(135deg, #FF6B6B, #EE5D5D);">
-            <i class="fas fa-thermometer-half fa-2x" style="margin-bottom: 1rem;"></i>
-            <h3>98.6 °F</h3>
-            <p>Body Temp</p>
+
+        <!-- Body Temp Card -->
+        <div class="card" style="background: #f87171; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 2rem; border-radius: 20px;">
+            <div style="font-size: 2.25rem; margin-bottom: 1rem;">🌡️</div>
+            <div id="temp-val-main" style="font-size: 2.5rem; font-weight: 800; font-family: 'Outfit';">98.6 °F</div>
+            <div style="font-size: 0.9rem; opacity: 0.95; font-weight: 600; margin-top: 1rem;">Body Temp</div>
         </div>
-        <div class="col glass-card stat-card" style="background: linear-gradient(135deg, #4ECDC4, #556270);">
-            <i class="fas fa-lungs fa-2x" style="margin-bottom: 1rem;"></i>
-            <h3>98%</h3>
-            <p>SpO2 Level</p>
+
+        <!-- SpO2 Card -->
+        <div class="card" style="background: #14b8a6; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 2rem; border-radius: 20px;">
+            <div style="font-size: 2.25rem; margin-bottom: 1rem;">🫁</div>
+            <div id="spo2-val-main" style="font-size: 2.5rem; font-weight: 800; font-family: 'Outfit';">98 %</div>
+            <div style="font-size: 0.9rem; opacity: 0.95; font-weight: 600; margin-top: 1rem;">SpO2 Level</div>
         </div>
-        <div class="col glass-card stat-card" style="background: linear-gradient(135deg, #FFC107, #FF9800);">
-            <i class="fas fa-tachometer-alt fa-2x" style="margin-bottom: 1rem;"></i>
-            <h3>120/80</h3>
-            <p>Blood Pressure</p>
+
+        <!-- Blood Pressure Card -->
+        <div class="card" style="background: #fbbf24; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 2rem; border-radius: 20px;">
+            <div style="font-size: 2.25rem; margin-bottom: 1rem;">⏲️</div>
+            <div id="bp-val-main" style="font-size: 2.5rem; font-weight: 800; font-family: 'Outfit';">120/80</div>
+            <div style="font-size: 0.9rem; opacity: 0.95; font-weight: 600; margin-top: 1rem;">Blood Pressure</div>
         </div>
     </div>
 
-    <div class="row" style="display: flex; gap: 2rem; flex-wrap: wrap;">
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
         <!-- Left Column: Risk & Charts -->
-        <div class="col-8 glass-card" style="flex: 2; min-width: 300px;">
-            <h3 style="margin-bottom: 1.5rem;">Health Trends</h3>
-            <div class="chart-container">
+        <div class="card" style="padding: 2rem; height: 550px; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h3 style="font-size: 1.5rem; color: #1e293b;">Health Trends</h3>
+                <div style="display: flex; gap: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600;">
+                        <span style="width: 25px; height: 3px; background: #3b82f6; border-radius: 2px;"></span> Heart Rate (bpm)
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600;">
+                        <span style="width: 25px; height: 3px; background: #14b8a6; border-radius: 2px;"></span> SpO2 (%)
+                    </div>
+                </div>
+            </div>
+            <div style="flex-grow: 1; min-height: 0;">
                 <canvas id="healthTrendChart"></canvas>
             </div>
-
-            <h3 style="margin-top: 2rem;">AI Risk Assessment</h3>
-            <div class="risk-meter">
-                <div class="risk-fill" id="riskBar"
-                    style="background: linear-gradient(90deg, #4CAF50, #FFEB3B, #F44336);"></div>
-            </div>
-            <p id="riskText" style="text-align: right; font-weight: bold; color: #555;">Calculating...</p>
         </div>
 
         <!-- Right Column: Appointments & Reminders -->

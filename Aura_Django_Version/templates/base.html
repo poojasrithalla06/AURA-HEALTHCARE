@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AuraHealth - AI Powered Healthcare Assistant{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="apple-touch-icon" href="{% static 'images/icon-192.png' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+
+<body>
+    <audio id="sos-buzzer" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo" style="display: flex; align-items: center; gap: 0.75rem;">
+                <img src="{% static 'images/logo.png' %}" alt="AuraHealth Logo" style="height: 42px; border-radius: 8px;">
+                <span style="font-family: 'Outfit'; font-weight: 700; font-size: 1.5rem; letter-spacing: -0.04em;">Aura<span style="color: var(--primary-color);">Health</span></span>
+            </a>
+            <ul class="nav-links">
+                {% if user.is_authenticated %}
+                <li><a href="{% url 'dashboard' %}"><span class="nav-icon">📊</span><span>Dashboard</span></a></li>
+                <li><a href="{% url 'calendar' %}"><span class="nav-icon">📅</span><span>Schedule</span></a></li>
+                <li><a href="{% url 'health_metrics' %}"><span class="nav-icon">🩺</span><span>Vitals</span></a></li>
+                <li><a href="{% url 'ai_assistant' %}"><span class="nav-icon">🤖</span><span>AI Assistant</span></a></li>
+                <li><a href="{% url 'image_analysis' %}"><span class="nav-icon">🖼️</span><span>Medical AI</span></a></li>
+                <li><a href="{% url 'diet_plans' %}"><span class="nav-icon">🥗</span><span>Diet Planning</span></a></li>
+                <li><a href="{% url 'manage_family' %}"><span class="nav-icon">👨‍👩‍👧</span><span>Family Sync</span></a></li>
+                
+                <li style="margin-left: 1.5rem; border-left: 1px solid var(--border-color); padding-left: 1.5rem;">
+                    <a href="{% url 'profile' %}" style="flex-direction: row; gap: 0.75rem;">
+                        <div class="letter-avatar letter-avatar-sm" style="background: #6366f1;">
+                            {{ user.username|first|upper }}
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                            <span style="font-size: 0.65rem; color: #94a3b8; font-weight: 500;">Hi,</span>
+                            <span style="font-size: 0.85rem; color: #1e293b; font-weight: 700; margin-top: -2px;">{{ user.username }}</span>
+                        </div>
+                    </a>
+                </li>
+                <li>
+                    <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-link" style="color: #f43f5e; font-weight: 800; border: none; background: none; cursor: pointer;">Logout</button>
+                    </form>
+                </li>
+                <li>
+                    <select style="padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.75rem; border: 1px solid var(--border-color); color: #475569; font-weight: 600;">
+                        <option>Eng</option>
+                        <option>Spa</option>
+                    </select>
+                </li>
+                {% else %}
+                <li><a href="{% url 'login' %}">Login</a></li>
+                <li><a href="{% url 'register' %}" class="btn"
+                        style="padding: 0.5rem 1rem; width: auto; display: inline-block; margin-left: 0.5rem;">Get
+                        Started</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container main-content">
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+
+</html>

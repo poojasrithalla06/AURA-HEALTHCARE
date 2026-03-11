@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Health Telemetry - AuraHealth{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header" style="margin: 3rem 0;">
+        <div>
+            <h2 style="font-size: 3rem; font-family: 'Outfit'; font-weight: 800; letter-spacing: -0.05em; color: var(--text-main);">Biometric Telemetry</h2>
+            <p style="color: var(--text-muted); font-size: 1.15rem;">Precision monitoring of your physiological stream.</p>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 3rem;">
+        <!-- Left: Record New Metric -->
+        <div>
+            <div class="card" style="margin: 0; position: sticky; top: 120px; padding: 2.5rem; background: #ffffff; border: 1px solid #f1f5f9; box-shadow: var(--shadow-premium);">
+                <h3 style="margin-bottom: 2rem; font-family: 'Outfit'; font-weight: 700; color: var(--text-main);">Log Vitals</h3>
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; display: block; font-weight: 700;">{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn" style="border-radius: 12px; padding: 1.25rem; font-weight: 800;">UPDATE STREAM</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right: History -->
+        <div>
+            <div class="card" style="margin: 0; padding: 3rem; background: #ffffff; border: 1px solid #f1f5f9; box-shadow: var(--shadow-premium);">
+                <h3 style="margin-bottom: 3rem; font-family: 'Outfit'; font-weight: 700;">Historical Data Stream</h3>
+                {% if metrics %}
+                <div style="display: grid; gap: 1.5rem;">
+                    {% for metric in metrics %}
+                    <div style="padding: 1.75rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease;" class="metric-card">
+                        <div style="display: flex; align-items: center; gap: 1.5rem;">
+                            <div style="width: 55px; height: 55px; background: #ffffff; color: var(--primary-color); display: flex; align-items: center; justify-content: center; border-radius: 15px; font-size: 1.75rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #f1f5f9;">
+                                {% if metric.metric_type == 'hr' %}❤️{% elif metric.metric_type == 'bp' %}🩹{% elif metric.metric_type == 'temp' %}🌡️{% else %}📊{% endif %}
+                            </div>
+                            <div>
+                                <span style="font-weight: 800; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.75rem; font-family: 'Outfit';">{{ metric.get_metric_type_display }}</span>
+                                <div style="font-size: 2rem; font-weight: 900; color: var(--text-main); font-family: 'Outfit'; margin-top: 0.25rem;">
+                                    {{ metric.value }} <span style="font-size: 1rem; font-weight: 500; color: var(--text-muted);">{% if metric.metric_type == 'hr' %}bpm{% elif metric.metric_type == 'bp' %}mmHg{% elif metric.metric_type == 'temp' %}°C{% endif %}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: right; border-left: 2px solid #e2e8f0; padding-left: 2rem;">
+                            <div style="font-weight: 800; color: var(--text-main); font-size: 1rem; font-family: 'Outfit';">{{ metric.recorded_at|date:"M d, Y" }}</div>
+                            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600; margin-top: 0.25rem;">{{ metric.recorded_at|date:"H:i" }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div style="text-align: center; padding: 10rem 2rem; border: 2px dashed #e2e8f0; border-radius: 24px;">
+                    <div style="font-size: 5rem; margin-bottom: 2rem; opacity: 0.3;">📈</div>
+                    <p style="color: var(--text-muted); font-size: 1.15rem; line-height: 1.7; max-width: 450px; margin: 0 auto;">No physiological telemetry recorded. Start logging your vitals to initialize your health trend analysis.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .metric-card:hover { transform: translateX(5px); border-color: var(--primary-color) !important; background: #ffffff !important; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+</style>
+{% endblock %}

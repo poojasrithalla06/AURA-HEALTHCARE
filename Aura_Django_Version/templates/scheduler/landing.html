@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Welcome to AuraHealth - AI Powered Healthcare Assistant{% endblock %}
+
+{% block content %}
+<div class="landing-hero" style="padding: 8rem 0; text-align: center;">
+    <div style="max-width: 900px; margin: 0 auto; position: relative;">
+        <!-- Animated Background Blur -->
+        <div style="position: absolute; width: 400px; height: 400px; background: rgba(14, 165, 233, 0.1); filter: blur(100px); border-radius: 50%; top: -100px; left: 50%; transform: translateX(-50%); z-index: -1;"></div>
+        
+        <img src="{% static 'images/logo.png' %}" alt="Aura Logo" style="width: 120px; margin-bottom: 2rem; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+        
+        <div style="display: inline-block; padding: 0.6rem 1.5rem; background: #eff6ff; border: 1px solid #dbeafe; border-radius: 2rem; color: var(--primary-color); font-weight: 700; font-size: 0.85rem; margin-bottom: 2.5rem; letter-spacing: 0.05em; text-transform: uppercase;">
+            ✨ Redefining Digital Health
+        </div>
+        <h1 style="font-family: 'Outfit'; font-size: 5rem; font-weight: 800; line-height: 1.05; letter-spacing: -0.05em; margin-bottom: 2rem; color: var(--text-main);">
+            Your Wellness, <br><span style="background: linear-gradient(135deg, #0ea5e9, #8b5cf6); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Intelligently Optimized.</span>
+        </h1>
+        <p style="font-size: 1.35rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 3.5rem; font-weight: 400; max-width: 700px; margin-left: auto; margin-right: auto;">
+            AuraHealth integrates revolutionary AI diagnostics and real-time biometric tracking into a beautiful, high-performance interface.
+        </p>
+        <div style="display: flex; gap: 1.5rem; justify-content: center;">
+            <a href="{% url 'register' %}" class="btn" style="width: auto; padding: 1.25rem 3rem; font-size: 1.15rem; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(14, 165, 233, 0.4);">Unlock Aura Free</a>
+            <a href="{% url 'login' %}" class="btn" style="width: auto; padding: 1.25rem 3rem; font-size: 1.15rem; border-radius: 16px; background: #ffffff; border: 1px solid var(--border-color); color: var(--text-main); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">Sign In</a>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; margin-top: 4rem;">
+    <div class="card" style="margin: 0; padding: 3rem; border: 1px solid #f1f5f9; background: #ffffff; box-shadow: var(--shadow-premium);">
+        <div style="font-size: 3rem; margin-bottom: 2rem; background: #f0f9ff; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 20px;">🧠</div>
+        <h3 style="font-size: 1.75rem; margin-bottom: 1.25rem;">Neural Symptom Checker</h3>
+        <p style="color: var(--text-muted); font-size: 1.05rem; line-height: 1.7;">Describe your symptoms to our multilingual AI assistant and receive instant health insights.</p>
+    </div>
+    <div class="card" style="margin: 0; padding: 3rem; border: 1px solid #f1f5f9; background: #ffffff; box-shadow: var(--shadow-premium);">
+        <div style="font-size: 3rem; margin-bottom: 2rem; background: #f5f3ff; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 20px;">🩺</div>
+        <h3 style="font-size: 1.75rem; margin-bottom: 1.25rem;">Biometric Telemetry</h3>
+        <p style="color: var(--text-muted); font-size: 1.05rem; line-height: 1.7;">Track heart rate, blood pressure, and more with professional-grade predictive analytics.</p>
+    </div>
+    <div class="card" style="margin: 0; padding: 3rem; border: 1px solid #f1f5f9; background: #ffffff; box-shadow: var(--shadow-premium);">
+        <div style="font-size: 3rem; margin-bottom: 2rem; background: #fff1f2; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 20px;">🆘</div>
+        <h3 style="font-size: 1.75rem; margin-bottom: 1.25rem;">Emergency SOS</h3>
+        <p style="color: var(--text-muted); font-size: 1.05rem; line-height: 1.7;">Instant crisis notification system for family and administrators during medical emergencies.</p>
+    </div>
+</div>
+
+<div style="margin-top: 10rem; text-align: center; padding-bottom: 10rem;">
+    <div style="display: inline-block; padding: 0.5rem 1rem; background: #f1f5f9; border-radius: 8px; color: var(--text-muted); font-size: 0.8rem; font-weight: 700; margin-bottom: 2rem; text-transform: uppercase; letter-spacing: 0.1em;">Verified by Industry Standards</div>
+    <h2 style="font-family: 'Outfit'; font-size: 3rem; font-weight: 800; margin-bottom: 1.5rem; color: var(--text-main);">Trusted. Integrated. Intelligent.</h2>
+    <p style="color: var(--text-muted); font-size: 1.15rem; max-width: 600px; margin: 0 auto 5rem auto;">Our models leverage institutional-grade medical datasets to provide high-fidelity risk assessments.</p>
+    
+    <div style="display: flex; gap: 5rem; justify-content: center; align-items: center; opacity: 0.5;">
+        <span style="font-weight: 900; font-size: 1.75rem; color: #1e293b; letter-spacing: -0.05em; font-family: 'Outfit';">HOSPITAL IQ</span>
+        <span style="font-weight: 900; font-size: 1.75rem; color: #1e293b; letter-spacing: -0.05em; font-family: 'Outfit';">MEDCLOUD</span>
+        <span style="font-weight: 900; font-size: 1.75rem; color: #1e293b; letter-spacing: -0.05em; font-family: 'Outfit';">GENOME X</span>
+    </div>
+</div>
+{% endblock %}

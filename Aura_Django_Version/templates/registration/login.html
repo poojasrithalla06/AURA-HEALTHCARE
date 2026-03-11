@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign In - AuraHealth{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: center; min-height: 80vh;">
+    <div class="card" style="max-width: 480px; width: 100%; padding: 4rem; background: #ffffff; border: 1px solid #f1f5f9; box-shadow: var(--shadow-premium); border-radius: 24px; position: relative; overflow: hidden;">
+        <!-- Decorative background element -->
+        <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(14, 165, 233, 0.05); border-radius: 50%; filter: blur(40px);"></div>
+        
+        <div style="text-align: center; margin-bottom: 3.5rem;">
+            <div style="width: 70px; height: 70px; background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); border-radius: 20px; display: flex; align-items: center; justify-content: center; color: white; margin: 0 auto 2rem; font-size: 2rem; font-weight: 800; box-shadow: 0 12px 30px rgba(14, 165, 233, 0.3);">H</div>
+            <h2 style="font-family: 'Outfit'; font-size: 2.5rem; font-weight: 800; margin-bottom: 0.75rem; color: var(--text-main); letter-spacing: -0.04em;">Authorized Login</h2>
+            <p style="color: var(--text-muted); font-size: 1.1rem; font-weight: 500;">Access your health intelligence cluster.</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group" style="margin-bottom: 2rem;">
+                <label style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.75rem; font-weight: 700;">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <ul class="errorlist" style="color: var(--danger); font-size: 0.85rem; margin-top: 0.5rem; list-style: none; padding: 1rem; background: #fef2f2; border-radius: 8px;">
+                    {% for error in field.errors %}
+                    <li>⚠️ {{ error }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn" style="margin-top: 1.5rem; border-radius: 14px; padding: 1.25rem; font-weight: 800; font-size: 1.1rem; letter-spacing: 0.05em;">INITIALIZE SESSION</button>
+        </form>
+
+        <div style="text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #f1f5f9;">
+            <p style="color: var(--text-muted); font-size: 1rem; font-weight: 500;">
+                New to the platform? 
+                <a href="{% url 'register' %}" style="color: var(--primary-color); text-decoration: none; font-weight: 700;">Create Identity</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
