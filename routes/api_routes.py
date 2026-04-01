@@ -183,9 +183,21 @@ def scan_prescription():
         return jsonify(analysis)
 
     except Exception as e:
-        print(f"Scan Error: {e}")
+        print(f"Scan Error Details: {e}")
         if os.path.exists(filepath):
             os.remove(filepath)
+            
+        # Simulation Mode Fallback:
+        # If the error is about tesseract being missing, let's provide a simulation result
+        # so the user can still use the app for demonstration purposes.
+        error_msg = str(e).lower()
+        if "tesseract" in error_msg or "not found" in error_msg or "not installed" in error_msg:
+             from utils.ai_engine import scan_prescription_with_ai
+             simulation_text = "PRESCRIPTION: Amoxicillin 500mg, Paracetamol 500mg. Take one tablet thrice daily after meals."
+             analysis = scan_prescription_with_ai(simulation_text)
+             analysis['message'] = "Note: Running in Simulation Mode (Local Tesseract OCR not found)."
+             return jsonify(analysis)
+             
         return jsonify({'error': f"Failed to process prescription: {str(e)}"}), 500
 
 @api_bp.route('/analyze_report', methods=['POST'])
@@ -239,6 +251,7 @@ def analyze_report():
             return jsonify({'error': 'No text could be extracted. Please ensure Tesseract OCR is installed on your system.'}), 422
             
         # Analysis with Local LLM
+        from utils.ai_engine import analyze_health_report_with_ai
         analysis = analyze_health_report_with_ai(ocr_text)
         
         # Cleanup uploaded file
@@ -250,4 +263,14 @@ def analyze_report():
         print(f"Report Analysis Error: {e}")
         if os.path.exists(filepath):
             os.remove(filepath)
+
+        # Simulation Mode Fallback for Report
+        error_msg = str(e).lower()
+        if "tesseract" in error_msg or "not found" in error_msg or "not installed" in error_msg:
+             from utils.ai_engine import analyze_health_report_with_ai
+             simulation_text = "LAB REPORT SUMMARY: HB: 14.5, WBC: 8500, Platelets: 250k. All values within normal range."
+             analysis = analyze_health_report_with_ai(simulation_text)
+             analysis['message'] = "Note: Running in Simulation Mode (Local Tesseract OCR not found)."
+             return jsonify(analysis)
+
         return jsonify({'error': f"Failed to analyze report: {str(e)}"}), 500
