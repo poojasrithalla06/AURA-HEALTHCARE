@@ -1,4 +1,72 @@
-import random
+import subprocess
+
+def detect_language(text):
+    """Simple script-based language detection."""
+    for char in text:
+        # Hindi (Devanagari)
+        if '\u0900' <= char <= '\u097F':
+            return "Hindi"
+        # Telugu
+        if '\u0c00' <= char <= '\u0c7F':
+            return "Telugu"
+    return "English"
+
+def query_local_llm(prompt):
+    try:
+        ollama_path = r"C:\Users\HP\AppData\Local\Programs\Ollama\ollama.exe"
+        result = subprocess.run(
+            [ollama_path, 'run', 'tinyllama'],
+            input=prompt,
+            capture_output=True,
+            text=True,
+            encoding='utf-8'
+        )
+        raw_output = result.stdout.strip()
+        
+        # Aggressive cleaning for Small LLMs (TinyLLaMA)
+        # 1. Remove anything before the LAST 'Assistant:' label if it exists
+        if "Assistant:" in raw_output:
+            raw_output = raw_output.split("Assistant:")[-1].strip()
+        
+        # 2. Remove anything after 'Human:' or 'User:' (hallucinated continuation)
+        for stop_word in ["Human:", "User:", "<|user|>", "System instruction:"]:
+            if stop_word in raw_output:
+                raw_output = raw_output.split(stop_word)[0].strip()
+
+        # 3. Strip common AI labels that TinyLLaMA tends to include despite instructions
+        prefixes_to_remove = ["Healthcare Assistant:", "Assistant:", "Doctor:", "Aura:", "Aura AI:", "System:", "Response:", "AI:", "IMPORTANT:"]
+        for prefix in prefixes_to_remove:
+            if raw_output.lower().startswith(prefix.lower()):
+                raw_output = raw_output[len(prefix):].strip()
+            elif raw_output.lower().startswith("*" + prefix.lower() + "*"):
+                raw_output = raw_output[len(prefix) + 2:].strip()
+                
+        # 4. Remove the instructions themselves if they leaked into the output
+        if "- Respond ONLY in" in raw_output:
+            # The model echoed the whole prompt
+            lines = raw_output.split('\n')
+            clean_lines = []
+            for line in lines:
+                if not any(instr in line for instr in ["Respond ONLY", "Do NOT use English", "Do NOT include names", "Keep response short", "Answer like a doctor"]):
+                    clean_lines.append(line)
+            raw_output = '\n'.join(clean_lines).strip()
+
+        # 5. Clean LLM output: Remove ALL repeated lines
+        clean_lines = []
+        seen = set()
+        for line in raw_output.split('\n'):
+            line = line.strip()
+            if not line: continue
+            if line.lower() not in seen:
+                clean_lines.append(line)
+                seen.add(line.lower())
+                
+        raw_output = '\n'.join(clean_lines).strip()
+        
+        return raw_output
+    except Exception as e:
+        print(f"Ollama Error: {e}")
+        return "I'm sorry, I'm having trouble connecting to my local brain right now. Please ensure Ollama is running."
 
 def predict_risk(data):
     # Mock AI Algorithm
@@ -44,6 +112,11 @@ def predict_risk(data):
 def chat_response(message, language, user_id):
     # Mock NLP Chatbot
     msg = message.lower()
+    
+    # Auto-detect language if not explicitly set to non-English
+    detected_lang = detect_language(msg)
+    if detected_lang == "Hindi": language = 'hi'
+    elif detected_lang == "Telugu": language = 'te'
     
     # Keyword mapping for different languages to internal intent
     intents = {
@@ -108,3 +181,93 @@ def chat_response(message, language, user_id):
     
     # Return matched intent in the correct language
     return lang_dict.get(intent_found, lang_dict['default'])
+
+def scan_prescription_with_ai(ocr_text):
+    """Analyze OCR text from prescription to extract structured medical details."""
+    prompt = (
+        f"Analyze this medical prescription text and extract structured information. "
+        f"Text: \"{ocr_text}\"\n\n"
+        "Instructions:\n"
+        "1. Identify Medicines\n"
+        "2. Extract Dosage (e.g., 500mg, 1-0-1)\n"
+        "3. Advice/Suggestions\n\n"
+        "Format your response as a clean bulleted list only. Do not add intro or outro."
+    )
+    
+    raw_response = query_local_llm(prompt)
+    
+    # Process structured response
+    medicine_list = []
+    dosage_info = []
+    advice = []
+    
+    lines = raw_response.split('\n')
+    current_section = None
+    
+    for line in lines:
+        line = line.strip('- *#')
+        if not line: continue
+        
+        low_line = line.lower()
+        if "medicine" in low_line: current_section = "m"
+        elif "dosage" in low_line or "quantity" in low_line: current_section = "d"
+        elif "advice" in low_line or "suggestion" in low_line: current_section = "a"
+        
+        if current_section == "m" and "medicine" not in low_line: medicine_list.append(line)
+        elif current_section == "d" and "dosage" not in low_line: dosage_info.append(line)
+        elif current_section == "a" and "advice" not in low_line: advice.append(line)
+
+    # Basic fallback if structured extraction fails due to Small LLM limitations
+    if not medicine_list:
+        medicine_list = ["Extraction failed - verify image quality."]
+    
+    return {
+        "medicines": medicine_list,
+        "dosage": dosage_info or ["Refer to prescription image"],
+        "advice": advice or ["Maintain regular health checks."]
+    }
+
+def analyze_health_report_with_ai(report_text):
+    """Analyze health report text using local LLM for summary, risk, suggestions, and diet."""
+    prompt = (
+        f"Analyze this health report and give:\n"
+        f"- Summary\n"
+        f"- Risk level (Low, Moderate, High, Critical)\n"
+        f"- Suggestions\n"
+        f"- Diet tips\n\n"
+        f"Report Text: \"{report_text}\"\n\n"
+        "Format your response as a clean bulleted list with these four headers. Do not add intro or outro."
+    )
+    
+    raw_response = query_local_llm(prompt)
+    
+    # Process structured response
+    summary = []
+    risk_level = "Unknown"
+    suggestions = []
+    diet_tips = []
+    
+    lines = raw_response.split('\n')
+    current_section = None
+    
+    for line in lines:
+        line = line.strip('- *#')
+        if not line: continue
+        
+        low_line = line.lower()
+        if "summary" in low_line: current_section = "s"
+        elif "risk level" in low_line: current_section = "r"
+        elif "suggestion" in low_line: current_section = "su"
+        elif "diet" in low_line: current_section = "d"
+        
+        if current_section == "s" and "summary" not in low_line: summary.append(line)
+        elif current_section == "r" and "risk level" not in low_line: risk_level = line
+        elif current_section == "su" and "suggestion" not in low_line: suggestions.append(line)
+        elif current_section == "d" and "diet" not in low_line: diet_tips.append(line)
+
+    return {
+        "summary": " ".join(summary) if summary else "No summary available.",
+        "risk_level": risk_level if risk_level != "Unknown" else "Moderate (AI could not determine)",
+        "suggestions": suggestions or ["Consult a doctor for a detailed review."],
+        "diet_tips": diet_tips or ["Follow a balanced diet based on your health conditions."]
+    }

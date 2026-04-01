@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container" style="max-width: 1000px; padding-top: 2rem;">
+    <div style="margin-bottom: 2.5rem; text-align: center;">
+        <h2 style="font-family: 'Outfit'; font-weight: 700; color: #1e293b; font-size: 2.5rem; margin-bottom: 0.5rem;">AI Prescription Scanner</h2>
+        <p style="color: #64748b; font-size: 1.1rem;">Upload your medical prescription to extract medicines and get AI-powered advice.</p>
+    </div>
+
+    <div class="card" style="padding: 3rem; background: #ffffff; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);">
+        <div style="background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 3rem; text-align: center; margin-bottom: 2rem;">
+            <input type="file" id="prescriptionFile" accept="image/*,.pdf" style="display: none;">
+            <label for="prescriptionFile" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
+                <i class="fas fa-file-medical" style="font-size: 4rem; color: #10b981;"></i>
+                <span id="fileNameDisplay" style="font-weight: 600; color: #475569; font-size: 1.2rem;">Click to upload (JPG, PNG, PDF)</span>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Maximum file size: 10MB</p>
+            </label>
+        </div>
+
+        <button onclick="scanPrescription()" class="cta-btn" id="scanBtn" style="width: 100%; border-radius: 12px; background: #10b981; color: white; border: none; font-size: 1.15rem; font-weight: 600; padding: 1.25rem; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
+            <i class="fas fa-search"></i> Scan Prescription
+        </button>
+
+        <div id="scanLoader" style="display: none; color: #10b981; font-weight: 600; margin-top: 2rem; text-align: center;">
+            <i class="fas fa-spinner fa-spin fa-2x" style="margin-bottom: 1rem; display: block;"></i> 
+            Running Local OCR & AI Analysis...
+        </div>
+
+        <div id="scanResult" style="display: none; margin-top: 3rem; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 2rem; border-radius: 16px;">
+            <h4 style="color: #166534; border-bottom: 2px solid #bbf7d0; padding-bottom: 1rem; margin-bottom: 2rem; font-size: 1.3rem;">Extracted Information</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div>
+                    <strong style="color: #1e293b; font-size: 1.1rem;"><i class="fas fa-pills" style="margin-right: 8px; color: #10b981;"></i> Medicines:</strong>
+                    <ul id="resMeds" style="margin-top: 1rem; padding-left: 1.5rem; color: #334155; line-height: 1.8;"></ul>
+                </div>
+                <div>
+                    <strong style="color: #1e293b; font-size: 1.1rem;"><i class="fas fa-clock" style="margin-right: 8px; color: #10b981;"></i> Dosage & Instructions:</strong>
+                    <ul id="resDosage" style="margin-top: 1rem; padding-left: 1.5rem; color: #334155; line-height: 1.8;"></ul>
+                </div>
+            </div>
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #bbf7d0;">
+                <strong style="color: #1e293b; font-size: 1.1rem;"><i class="fas fa-info-circle" style="margin-right: 8px; color: #10b981;"></i> Aura AI Suggestions:</strong>
+                <ul id="resAdvice" style="margin-top: 1rem; padding-left: 1.5rem; color: #334155; line-height: 1.8;"></ul>
+            </div>
+            
+            <div style="margin-top: 2rem; background: #fff; padding: 1rem; border-radius: 8px; border: 1px solid #bbf7d0; font-size: 0.85rem; color: #64748b;">
+                <i class="fas fa-exclamation-triangle" style="margin-right: 5px;"></i> <strong>Disclaimer:</strong> This is an AI extraction. Please always verify with your doctor or pharmacist before taking any medication.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('prescriptionFile').addEventListener('change', function(e) {
+        const fileName = e.target.files[0] ? e.target.files[0].name : "Click to upload (JPG, PNG, PDF)";
+        document.getElementById('fileNameDisplay').innerText = fileName;
+    });
+
+    function scanPrescription() {
+        const fileInput = document.getElementById('prescriptionFile');
+        if (fileInput.files.length === 0) {
+            alert("Please select a file first.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        const btn = document.getElementById('scanBtn');
+        const loader = document.getElementById('scanLoader');
+        const resultDiv = document.getElementById('scanResult');
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        loader.style.display = 'block';
+        resultDiv.style.display = 'none';
+
+        // Clear previous results
+        ['resMeds', 'resDosage', 'resAdvice'].forEach(id => document.getElementById(id).innerHTML = '');
+
+        fetch('/api/scan_prescription', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-search"></i> Scan Prescription';
+            loader.style.display = 'none';
+
+            if (data.error) {
+                alert("Error: " + data.error);
+                return;
+            }
+
+            // Fill results
+            data.medicines.forEach(m => {
+                const li = document.createElement('li');
+                li.innerText = m;
+                document.getElementById('resMeds').appendChild(li);
+            });
+            data.dosage.forEach(d => {
+                const li = document.createElement('li');
+                li.innerText = d;
+                document.getElementById('resDosage').appendChild(li);
+            });
+            data.advice.forEach(a => {
+                const li = document.createElement('li');
+                li.innerText = a;
+                document.getElementById('resAdvice').appendChild(li);
+            });
+
+            resultDiv.style.display = 'block';
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
+        })
+        .catch(err => {
+            console.error(err);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-search"></i> Scan Prescription';
+            loader.style.display = 'none';
+            alert("An error occurred during scanning. Ensure Tesseract is installed locally.");
+        });
+    }
+</script>
+{% endblock %}

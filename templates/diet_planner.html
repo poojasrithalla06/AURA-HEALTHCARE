@@ -1,0 +1,323 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="diet-planner-page">
+    <div class="page-header" style="text-align: center; margin-bottom: 3rem;">
+        <h1 style="font-family: 'Outfit', sans-serif; font-weight: 800; color: #0f172a; font-size: 2.8rem; margin-bottom: 0.5rem; letter-spacing: -1px;">
+            Aura <span style="background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Diet Engine</span>
+        </h1>
+        <p style="color: #64748b; font-size: 1.1rem; max-width: 600px; margin: 0 auto; font-weight: 500;">
+            Hyper-personalized nutritional protocols powered by neural synthesis.
+        </p>
+    </div>
+
+    <div class="diet-grid">
+        <!-- LEFT SIDE: CONFIGURATION -->
+        <div class="config-sidebar">
+            <div class="glass-card protocol-card" style="padding: 2rem; border-radius: 24px; background: white; border: 1px solid #f1f5f9; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);">
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                    <div style="width: 40px; height: 40px; background: #f0fdf4; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #10b981;">
+                        <i class="fas fa-sliders-h"></i>
+                    </div>
+                    <h2 style="font-family: 'Outfit'; font-weight: 700; color: #1e293b; font-size: 1.25rem; margin: 0;">Configure Protocol</h2>
+                </div>
+
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Age</label>
+                        <input type="number" id="userAge" placeholder="25" style="width: 100%; padding: 0.75rem; border-radius: 12px; border: 2px solid #f1f5f9; background: #f8fafc; font-weight: 600; color: #1e293b; outline: none; transition: all 0.3s;" onfocus="this.style.borderColor='#3b82f6'">
+                    </div>
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Weight (kg)</label>
+                        <input type="number" id="userWeight" placeholder="70" style="width: 100%; padding: 0.75rem; border-radius: 12px; border: 2px solid #f1f5f9; background: #f8fafc; font-weight: 600; color: #1e293b; outline: none; transition: all 0.3s;" onfocus="this.style.borderColor='#3b82f6'">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 2rem;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Target Objective</label>
+                    <div class="select-wrapper" style="position: relative;">
+                        <select id="goalSelect" style="width: 100%; padding: 1rem 1.25rem; border-radius: 16px; border: 2px solid #f1f5f9; background: #f8fafc; font-weight: 600; color: #1e293b; appearance: none; cursor: pointer; transition: all 0.3s;">
+                            <option value="Weight Loss">Weight Loss</option>
+                            <option value="Muscle Gain">Muscle Gain</option>
+                            <option value="General Health">General Health</option>
+                        </select>
+                        <div style="position: absolute; right: 1.25rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: #94a3b8;">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="generateDiet()" id="generateBtn" 
+                    style="width: 100%; padding: 1.25rem; border-radius: 16px; border: none; background: #0f172a; color: white; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                    <i class="fas fa-terminal"></i> COMPUTE PLAN
+                </button>
+
+                <!-- Hidden element for raw data as per user request -->
+                <div id="dietResult" style="display: none;"></div>
+
+                <div id="loader" style="display: none; margin-top: 1.5rem; text-align: center;">
+                    <div class="spinner"></div>
+                    <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.75rem; font-weight: 600;">Processing metabolic data...</p>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem; padding: 1.5rem; border-radius: 20px; background: #f8fafc; border: 1px dashed #e2e8f0;">
+                <h4 style="font-size: 0.8rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.75rem;">System Status</h4>
+                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #475569; font-weight: 600;">
+                    <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block;"></span>
+                    Local AI Engine Active
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDE: RESULTS -->
+        <div class="plan-results">
+            <div id="placeholderView" style="text-align: center; padding: 5rem 2rem; background: #f8fafc; border-radius: 32px; border: 2px dashed #e2e8f0;">
+                <div style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1.5rem;">🥗</div>
+                <h3 style="color: #64748b; font-weight: 700;">Ready to Sync</h3>
+                <p style="color: #94a3b8; font-size: 0.95rem;">Configure your protocol and click compute to generate your AI-optimized nutrition plan.</p>
+            </div>
+
+            <div id="resultsView" style="display: none;">
+                <div class="meals-grid" style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+                    <!-- MORNING -->
+                    <div class="meal-card sunrise-card">
+                        <div class="meal-header">
+                            <div class="meal-icon">☀️</div>
+                            <div>
+                                <h3>Sunrise Fuel</h3>
+                                <span>Morning Protocol</span>
+                            </div>
+                        </div>
+                        <div id="morningContent" class="meal-body"></div>
+                    </div>
+
+                    <!-- AFTERNOON -->
+                    <div class="meal-card midday-card">
+                        <div class="meal-header">
+                            <div class="meal-icon">🌤️</div>
+                            <div>
+                                <h3>Mid-Day Synthesis</h3>
+                                <span>Afternoon Protocol</span>
+                            </div>
+                        </div>
+                        <div id="afternoonContent" class="meal-body"></div>
+                    </div>
+
+                    <!-- EVENING -->
+                    <div class="meal-card night-card">
+                        <div class="meal-header">
+                            <div class="meal-icon">🌙</div>
+                            <div>
+                                <h3>Night Recovery</h3>
+                                <span>Evening Protocol</span>
+                            </div>
+                        </div>
+                        <div id="eveningContent" class="meal-body"></div>
+                    </div>
+                </div>
+
+                <!-- NEURAL INSIGHT -->
+                <div class="insight-section" style="margin-top: 2rem;">
+                    <div style="background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%); padding: 2rem; border-radius: 24px; border: 1px solid #dcfce7; position: relative; overflow: hidden;">
+                        <div style="position: absolute; right: -20px; top: -10px; font-size: 8rem; color: rgba(16, 185, 129, 0.03); transform: rotate(-10deg); font-weight: 800;">AI</div>
+                        <h3 style="display: flex; align-items: center; gap: 0.75rem; font-family: 'Outfit'; color: #1e40af; font-weight: 800; margin-bottom: 1rem; position: relative;">
+                            <i class="fas fa-brain"></i> Neural Insight
+                        </h3>
+                        <div id="tipsContent" style="color: #334155; line-height: 1.6; font-weight: 500; font-size: 0.95rem; position: relative;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&display=swap');
+
+    .diet-planner-page {
+        font-family: 'Inter', sans-serif;
+        color: #1e293b;
+    }
+
+    .diet-grid {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 2.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    @media (max-width: 900px) {
+        .diet-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .meal-card {
+        background: white;
+        border-radius: 24px;
+        padding: 2rem;
+        border: 1px solid #f1f5f9;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    }
+
+    .meal-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+    }
+
+    .meal-header {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .meal-icon {
+        width: 54px;
+        height: 54px;
+        background: #f8fafc;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .meal-header h3 {
+        margin: 0;
+        font-family: 'Outfit';
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: #0f172a;
+    }
+
+    .meal-header span {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .meal-body {
+        color: #475569;
+        line-height: 1.7;
+        font-size: 1.05rem;
+        white-space: pre-wrap;
+    }
+
+    .sunrise-card { border-left: 6px solid #fbbf24; }
+    .sunrise-card .meal-icon { background: #fffbeb; color: #d97706; }
+    
+    .midday-card { border-left: 6px solid #10b981; }
+    .midday-card .meal-icon { background: #f0fdf4; color: #059669; }
+    
+    .night-card { border-left: 6px solid #3b82f6; }
+    .night-card .meal-icon { background: #eff6ff; color: #2563eb; }
+
+    #dietGoal:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+
+    #generateBtn:hover {
+        background: #1e293b;
+        transform: scale(1.02);
+    }
+
+    #generateBtn:active {
+        transform: scale(0.98);
+    }
+
+    .spinner {
+        width: 30px;
+        height: 30px;
+        border: 4px solid #f1f5f9;
+        border-top: 4px solid #0f172a;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+<script>
+    function generateDiet() {
+        const age = document.getElementById('userAge').value;
+        const weight = document.getElementById('userWeight').value;
+        const goal = document.getElementById('goalSelect').value;
+        const loader = document.getElementById('loader');
+        const btn = document.getElementById('generateBtn');
+        const placeholderView = document.getElementById('placeholderView');
+        const resultsView = document.getElementById('resultsView');
+
+        loader.style.display = 'block';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+
+        fetch('/generate_diet', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ goal: goal, age: age, weight: weight })
+        })
+        .then(res => res.json())
+        .then(data => {
+            loader.style.display = 'none';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+
+            if (data.diet) {
+                // Ensure the raw text is available as requested
+                if (document.getElementById('dietResult')) {
+                    document.getElementById('dietResult').innerText = data.diet;
+                }
+
+                placeholderView.style.display = 'none';
+                resultsView.style.display = 'block';
+                
+                const text = data.diet;
+                
+                // Parse sections for the multi-card UI
+                let morning = "No specific morning plan generated.";
+                let afternoon = "No specific afternoon plan generated.";
+                let evening = "No specific evening plan generated.";
+                let tips = "Eat balanced meals and stay hydrated.";
+
+                const mMatch = text.match(/Morning:([\s\S]*?)(?=Afternoon:|Evening:|Tips:|$)/i);
+                const aMatch = text.match(/Afternoon:([\s\S]*?)(?=Evening:|Tips:|$)/i);
+                const eMatch = text.match(/Evening:([\s\S]*?)(?=Tips:|$)/i);
+                const tMatch = text.match(/Tips:([\s\S]*)/i);
+
+                if (mMatch) morning = mMatch[1].trim();
+                if (aMatch) afternoon = aMatch[1].trim();
+                if (eMatch) evening = eMatch[1].trim();
+                if (tMatch) tips = tMatch[1].trim();
+
+                document.getElementById('morningContent').innerText = morning;
+                document.getElementById('afternoonContent').innerText = afternoon;
+                document.getElementById('eveningContent').innerText = evening;
+                document.getElementById('tipsContent').innerText = tips;
+
+                resultsView.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                alert("The AI engine did not return a valid plan. Check your local server.");
+            }
+        })
+        .catch(err => {
+            loader.style.display = 'none';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            console.error(err);
+        });
+    }
+</script>
+{% endblock %}

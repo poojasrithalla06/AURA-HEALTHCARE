@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container" style="max-width: 1000px; padding-top: 2rem;">
+    <div style="margin-bottom: 2.5rem; text-align: center;">
+        <h2 style="font-family: 'Outfit'; font-weight: 700; color: #1e293b; font-size: 2.5rem; margin-bottom: 0.5rem;">Health Report Analyzer</h2>
+        <p style="color: #64748b; font-size: 1.1rem;">Upload your health report (Blood test, MRI, etc.) for a detailed AI analysis.</p>
+    </div>
+
+    <div class="card" style="padding: 3rem; background: #ffffff; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);">
+        <div style="background: #f8fafc; border: 2px dashed #3b82f6; border-radius: 12px; padding: 3rem; text-align: center; margin-bottom: 2rem;">
+            <input type="file" id="reportFile" accept="image/*,.pdf" style="display: none;">
+            <label for="reportFile" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
+                <i class="fas fa-file-pdf" style="font-size: 4rem; color: #3b82f6;"></i>
+                <span id="reportFileNameDisplay" style="font-weight: 600; color: #475569; font-size: 1.2rem;">Click to upload health report (JPG, PNG, PDF)</span>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Maximum file size: 10MB</p>
+            </label>
+        </div>
+
+        <button onclick="analyzeReport()" class="cta-btn" id="analyzeReportBtn" style="width: 100%; border-radius: 12px; background: #3b82f6; color: white; border: none; font-size: 1.15rem; font-weight: 600; padding: 1.25rem; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);">
+            <i class="fas fa-microscope"></i> Analyze Report
+        </button>
+
+        <div id="reportLoader" style="display: none; color: #3b82f6; font-weight: 600; margin-top: 2rem; text-align: center;">
+            <i class="fas fa-spinner fa-spin fa-2x" style="margin-bottom: 1rem; display: block;"></i> 
+            Running AI Health Analysis...
+        </div>
+
+        <div id="reportResult" style="display: none; margin-top: 3rem; background: #eff6ff; border: 1px solid #bfdbfe; padding: 2.5rem; border-radius: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 2px solid #bfdbfe; padding-bottom: 1.5rem;">
+                <h4 style="color: #1e40af; margin: 0; font-size: 1.4rem;">Analysis Results</h4>
+                <div id="resRisk" style="padding: 10px 25px; border-radius: 50px; font-weight: 800; font-size: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.05);"></div>
+            </div>
+            
+            <div style="margin-bottom: 2.5rem; background: #fff; padding: 1.5rem; border-radius: 12px; border: 1px solid #bfdbfe;">
+                <strong style="color: #1e293b; font-size: 1.1rem; display: block; margin-bottom: 1rem;"><i class="fas fa-align-left" style="margin-right: 8px; color: #3b82f6;"></i> Executive Summary:</strong>
+                <p id="resSummary" style="color: #334155; line-height: 1.8; font-size: 1rem; margin: 0;"></p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div style="background: #fff; padding: 1.5rem; border-radius: 12px; border: 1px solid #bfdbfe;">
+                    <strong style="color: #1e293b; font-size: 1.1rem; display: block; margin-bottom: 1rem;"><i class="fas fa-lightbulb" style="margin-right: 8px; color: #3b82f6;"></i> Suggestions:</strong>
+                    <ul id="resSuggestions" style="padding-left: 1.5rem; color: #334155; line-height: 1.8;"></ul>
+                </div>
+                <div style="background: #fff; padding: 1.5rem; border-radius: 12px; border: 1px solid #bfdbfe;">
+                    <strong style="color: #1e293b; font-size: 1.1rem; display: block; margin-bottom: 1rem;"><i class="fas fa-apple-alt" style="margin-right: 8px; color: #3b82f6;"></i> Diet Tips:</strong>
+                    <ul id="resDiet" style="padding-left: 1.5rem; color: #334155; line-height: 1.8;"></ul>
+                </div>
+            </div>
+            
+            <div style="margin-top: 2rem; font-size: 0.85rem; color: #64748b; text-align: center;">
+                <i class="fas fa-exclamation-circle" style="margin-right: 6px;"></i> 
+                <strong>Crucial Note:</strong> AI analysis is for informational purposes. Always consult a medical professional for clinical diagnosis.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('reportFile').addEventListener('change', function(e) {
+        const fileName = e.target.files[0] ? e.target.files[0].name : "Click to upload health report (JPG, PNG, PDF)";
+        document.getElementById('reportFileNameDisplay').innerText = fileName;
+    });
+
+    function analyzeReport() {
+        const fileInput = document.getElementById('reportFile');
+        if (fileInput.files.length === 0) {
+            alert("Please select a health report file first.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        const btn = document.getElementById('analyzeReportBtn');
+        const loader = document.getElementById('reportLoader');
+        const resultDiv = document.getElementById('reportResult');
+        const riskBadge = document.getElementById('resRisk');
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+        loader.style.display = 'block';
+        resultDiv.style.display = 'none';
+
+        // Clear previous results
+        document.getElementById('resSummary').innerText = '';
+        ['resSuggestions', 'resDiet'].forEach(id => document.getElementById(id).innerHTML = '');
+
+        fetch('/api/analyze_report', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-microscope"></i> Analyze Report';
+            loader.style.display = 'none';
+
+            if (data.error) {
+                alert("Error: " + data.error);
+                return;
+            }
+
+            // Fill results
+            document.getElementById('resSummary').innerText = data.summary;
+            
+            riskBadge.innerText = "Risk: " + data.risk_level;
+            const rLow = data.risk_level.toLowerCase();
+            if (rLow.includes('high') || rLow.includes('critical')) {
+                riskBadge.style.background = '#fee2e2';
+                riskBadge.style.color = '#ef4444';
+            } else if (rLow.includes('moderate')) {
+                riskBadge.style.background = '#fef3c7';
+                riskBadge.style.color = '#d97706';
+            } else {
+                riskBadge.style.background = '#dcfce7';
+                riskBadge.style.color = '#10b981';
+            }
+
+            data.suggestions.forEach(s => {
+                const li = document.createElement('li');
+                li.innerText = s;
+                document.getElementById('resSuggestions').appendChild(li);
+            });
+            data.diet_tips.forEach(d => {
+                const li = document.createElement('li');
+                li.innerText = d;
+                document.getElementById('resDiet').appendChild(li);
+            });
+
+            resultDiv.style.display = 'block';
+            resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        })
+        .catch(err => {
+            console.error(err);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-microscope"></i> Analyze Report';
+            loader.style.display = 'none';
+            alert("An error occurred during analysis. Ensure Tesseract is installed locally.");
+        });
+    }
+</script>
+{% endblock %}

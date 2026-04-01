@@ -1,58 +1,123 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="glass-card" style="max-width: 600px; margin: 4rem auto; padding: 2rem;">
-    <h2 style="color: var(--secondary); text-align: center; margin-bottom: 2rem;">Add Medication Reminder</h2>
+<div class="glass-card" style="max-width: 800px; margin: 4rem auto; padding: 2rem;">
+    <h2 style="color: var(--secondary); text-align: center; margin-bottom: 2rem;">Medicine Reminder System</h2>
 
-    <form id="medicationForm" onsubmit="submitMedication(event)">
-        <div class="form-group" style="margin-bottom: 1.5rem;">
-            <label style="display: block; margin-bottom: 0.5rem; color: #555;">Medicine Name</label>
-            <input type="text" id="medName" class="form-control" required
-                style="width: 100%; padding: 0.8rem; border-radius: var(--radius); border: 1px solid #ddd;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <!-- Add Reminder Form -->
+        <div style="background: rgba(255, 255, 255, 0.05); padding: 1.5rem; border-radius: var(--radius);">
+            <h3 style="margin-bottom: 1.5rem; font-size: 1.2rem;">Add New Reminder</h3>
+            <form id="reminderForm" onsubmit="submitReminder(event)">
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: #aaa;">Medicine Name</label>
+                    <input type="text" id="medicine_name" class="form-control" required
+                        placeholder="e.g. Paracetamol"
+                        style="width: 100%; padding: 0.8rem; border-radius: var(--radius); border: 1px solid #444; background: #222; color: white;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: #aaa;">Time</label>
+                    <input type="time" id="reminder_time" class="form-control" required
+                        style="width: 100%; padding: 0.8rem; border-radius: var(--radius); border: 1px solid #444; background: #222; color: white;">
+                </div>
+
+                <button type="submit" class="cta-btn" style="width: 100%;">Add Reminder</button>
+            </form>
         </div>
 
-        <div class="form-group" style="margin-bottom: 1.5rem;">
-            <label style="display: block; margin-bottom: 0.5rem; color: #555;">Time</label>
-            <input type="time" id="medTime" class="form-control" required
-                style="width: 100%; padding: 0.8rem; border-radius: var(--radius); border: 1px solid #ddd;">
+        <!-- Reminders List -->
+        <div style="background: rgba(255, 255, 255, 0.05); padding: 1.5rem; border-radius: var(--radius);">
+            <h3 style="margin-bottom: 1.5rem; font-size: 1.2rem;">Your Reminders</h3>
+            <div id="remindersList" style="max-height: 300px; overflow-y: auto;">
+                <p style="color: #888; text-align: center;">Loading reminders...</p>
+            </div>
         </div>
-
-        <div class="form-group" style="margin-bottom: 1.5rem;">
-            <label style="display: block; margin-bottom: 0.5rem; color: #555;">Frequency</label>
-            <select id="medFreq" class="form-control"
-                style="width: 100%; padding: 0.8rem; border-radius: var(--radius); border: 1px solid #ddd;">
-                <option value="Daily">Daily</option>
-                <option value="Twice Daily">Twice Daily</option>
-                <option value="Weekly">Weekly</option>
-            </select>
-        </div>
-
-        <button type="submit" class="cta-btn" style="width: 100%;">Set Reminder</button>
-    </form>
+    </div>
 </div>
 
 <script>
-    function submitMedication(e) {
+    let activeReminders = [];
+    const userId = "{{ session.get('user_id') }}";
+
+    function fetchReminders() {
+        if (!userId) return;
+        
+        fetch(`/api/get_reminders?user_id=${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                activeReminders = data;
+                renderReminders();
+            })
+            .catch(err => console.error("Error fetching reminders:", err));
+    }
+
+    function renderReminders() {
+        const container = document.getElementById('remindersList');
+        if (activeReminders.length === 0) {
+            container.innerHTML = '<p style="color: #888; text-align: center;">No reminders set.</p>';
+            return;
+        }
+
+        container.innerHTML = activeReminders.map(rem => `
+            <div class="glass-card" style="padding: 1rem; margin-bottom: 1rem; background: rgba(255,255,255,0.03); border: 1px solid #333;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong style="color: var(--secondary);">${rem.medicine_name}</strong>
+                        <div style="font-size: 0.9rem; color: #aaa;">Time: ${rem.time}</div>
+                    </div>
+                    <span style="font-size: 0.8rem; padding: 0.2rem 0.5rem; border-radius: 10px; background: ${rem.status === 'pending' ? '#f39c1233' : '#27ae6033'}; color: ${rem.status === 'pending' ? '#f39c12' : '#27ae60'};">
+                        ${rem.status}
+                    </span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function submitReminder(e) {
         e.preventDefault();
         const medData = {
-            user_id: "{{ session.get('user_id') }}",
-            name: document.getElementById('medName').value,
-            time: document.getElementById('medTime').value,
-            frequency: document.getElementById('medFreq').value
+            user_id: userId,
+            medicine_name: document.getElementById('medicine_name').value,
+            time: document.getElementById('reminder_time').value
         };
 
-        fetch('/api/medication', {
+        fetch('/api/add_reminder', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(medData)
         })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    alert('Reminder Added!');
-                    window.location.href = "{{ url_for('main.dashboard') }}";
-                }
-            });
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Reminder Added!');
+                document.getElementById('reminderForm').reset();
+                fetchReminders();
+            }
+        });
     }
+
+    // Timer Logic
+    function checkReminders() {
+        const now = new Date();
+        const currentTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        
+        activeReminders.forEach(rem => {
+            if (rem.time === currentTime && rem.status === 'pending') {
+                // Show Alert
+                alert(`🔔 Time to take medicine: ${rem.medicine_name}`);
+                
+                // Technically we should update status to avoid repeated alerts in the same minute
+                // but for now, we'll just track it locally to prevent multiple alerts
+                rem.status = 'alerted'; 
+            }
+        });
+    }
+
+    // Initialize
+    fetchReminders();
+    
+    // Check every minute
+    setInterval(checkReminders, 1000 * 30); // Check every 30 seconds for better precision
 </script>
-{% endblock %}
+{% endblock %}

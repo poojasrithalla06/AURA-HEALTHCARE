@@ -2,8 +2,20 @@
 
 {% block content %}
 <div class="container" style="max-width: 1400px; padding-top: 2rem;">
-    <div style="margin-bottom: 2.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
         <h2 style="font-family: 'Outfit'; font-weight: 700; color: #334155; font-size: 1.85rem;">Hello, <span style="font-weight: 800; color: #1e293b;">{{ session.get('username', 'User') }}!</span> <span style="font-weight: 500; font-size: 1.15rem; color: #94a3b8; margin-left: 0.5rem;">Here's your health summary.</span></h2>
+        
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <div id="wearableStatus" style="font-size: 0.85rem; color: #64748b; font-weight: 500; font-style: italic;">(Wearable Simulation Only)</div>
+            <button onclick="connectWearable()" id="wearableBtn" style="background: #34495e; color: white; border-radius: 50px; padding: 10px 25px; border: none; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(52, 73, 94, 0.2); display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-microchip"></i> Connect Wearable
+            </button>
+            <form action="{{ url_for('main.sos') }}" method="POST" style="margin: 0;" onsubmit="return confirm('Trigger Emergency SOS Alert?');">
+                <button type="submit" class="cta-btn" style="background: #E91E63; color: white; border-radius: 50px; padding: 12px 30px; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4); border: 2px solid white; cursor: pointer;">
+                    <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i> EMERGENCY SOS
+                </button>
+            </form>
+        </div>
     </div>
 
     <!-- Vitals Row Matching Reference Image -->
@@ -105,13 +117,76 @@
                     style="width: 100%; font-size: 0.9rem;">Submit Feedback</button>
             </div>
 
+            <!-- Emergency Guardian Card -->
+            <div class="glass-card">
+                <h3 style="margin-bottom: 1rem;"><i class="fas fa-user-shield" style="margin-right: 8px; color: #3b82f6;"></i> Emergency Guardian</h3>
+                <p style="font-size: 0.8rem; color: #666; margin-bottom: 1rem;">Add a trusted contact to be notified during SOS.</p>
+                <form action="{{ url_for('main.add_guardian') }}" method="POST">
+                    <input type="text" name="name" placeholder="Guardian Name" required
+                        style="width: 100%; border-radius: 8px; border: 1px solid #ddd; padding: 8px; font-size: 0.8rem; margin-bottom: 0.5rem; outline: none;">
+                    <input type="tel" name="phone" placeholder="Phone Number" required
+                        style="width: 100%; border-radius: 8px; border: 1px solid #ddd; padding: 8px; font-size: 0.8rem; margin-bottom: 0.5rem; outline: none;">
+                    <select name="relation" required
+                        style="width: 100%; border-radius: 8px; border: 1px solid #ddd; padding: 8px; font-size: 0.8rem; margin-bottom: 0.8rem; outline: none;">
+                        <option value="" disabled selected>Select Relation</option>
+                        <option value="Parent">Parent</option>
+                        <option value="Spouse">Spouse</option>
+                        <option value="Sibling">Sibling</option>
+                        <option value="Friend">Friend</option>
+                        <option value="Doctor">Doctor</option>
+                    </select>
+                    <button type="submit" class="cta-btn" style="width: 100%; font-size: 0.9rem; background: #3b82f6;">Save Guardian</button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+    
+    <!-- AI Health Explainer Section -->
+    <div class="card" style="margin-top: 2rem; padding: 2rem; background: #ffffff; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+        <h3 style="font-size: 1.5rem; color: #1e293b; margin-bottom: 1rem; font-family: 'Outfit';">AI Health Explainer</h3>
+        <p style="color: #64748b; margin-bottom: 1.5rem; font-size: 0.95rem;">Enter a symptom or disease name to get an AI-generated condition explanation, possible causes, precautions, diet suggestions, and when to see a doctor.</p>
+        
+        <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="flex: 1; position: relative; display: flex; align-items: center;">
+                <input type="text" id="aiConditionInput" placeholder="E.g. Mild headache, Asthma, Hypertension..." style="width: 100%; padding: 1rem 3rem 1rem 1rem; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 1rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#cbd5e1'">
+                <button id="dashMicBtn" title="Voice Input" style="position: absolute; right: 15px; background: none; border: none; font-size: 1.25rem; color: #64748b; cursor: pointer; transition: color 0.2s;"><i class="fas fa-microphone"></i></button>
+            </div>
+            <button onclick="getHealthExplanation()" class="cta-btn" style="padding: 0 2rem; font-size: 1rem; font-weight: 600; border-radius: 10px; background: #3b82f6; color: white; border: none; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#2563eb'" onmouseout="this.style.backgroundColor='#3b82f6'">Explain</button>
+        </div>
+
+        <div id="aiExplanationLoader" style="display: none; color: #3b82f6; font-weight: 600; margin-bottom: 1rem; text-align: center; padding: 1rem;">
+            <i class="fas fa-spinner fa-spin" style="margin-right: 0.5rem;"></i> Analyzing with Local AI... Please wait.
+        </div>
+
+        <div id="aiExplanationResult" style="display: none; background: #f8fafc; padding: 1.5rem; border-radius: 10px; border: 1px solid #e2e8f0; white-space: pre-wrap; font-size: 0.95rem; color: #334155; line-height: 1.6; font-family: system-ui, -apple-system, sans-serif;">
+        </div>
+    </div>
+
+    <!-- Quick AI AI Actions Section -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 3rem; margin-bottom: 2rem;">
+        <div class="card" style="padding: 2rem; background: #ffffff; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; align-items: center; text-align: center;">
+            <div style="width: 60px; height: 60px; background: #f0fdf4; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                <i class="fas fa-file-medical-alt" style="font-size: 1.8rem; color: #10b981;"></i>
+            </div>
+            <h3 style="font-size: 1.25rem; color: #1e293b; margin-bottom: 0.75rem; font-family: 'Outfit';">Prescription Scanner</h3>
+            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem; flex-grow: 1;">Instantly extract medicine names and dosages from your handwritten or digital prescriptions.</p>
+            <a href="{{ url_for('main.prescription_scanner') }}" class="cta-btn" style="width: 100%; border-radius: 10px; background: #10b981; color: white; border: none; font-size: 0.95rem; font-weight: 600; padding: 0.8rem; text-decoration: none;">Launch Scanner</a>
+        </div>
+
+        <div class="card" style="padding: 2rem; background: #ffffff; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; align-items: center; text-align: center;">
+            <div style="width: 60px; height: 60px; background: #eff6ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                <i class="fas fa-microscope" style="font-size: 1.8rem; color: #3b82f6;"></i>
+            </div>
+            <h3 style="font-size: 1.25rem; color: #1e293b; margin-bottom: 0.75rem; font-family: 'Outfit';">Health Report Analyzer</h3>
+            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem; flex-grow: 1;">Deep-dive into your lab results, blood tests, and MRI reports for AI-powered health insights.</p>
+            <a href="{{ url_for('main.report_analyzer') }}" class="cta-btn" style="width: 100%; border-radius: 10px; background: #3b82f6; color: white; border: none; font-size: 0.95rem; font-weight: 600; padding: 0.8rem; text-decoration: none;">Analyze Report</a>
         </div>
     </div>
 </div>
 
 <script>
     let dashIsHelpful = true;
-    const USER_ID = {{ user.id }};
 
     function setDashboardHelpful(status) {
         dashIsHelpful = status;
@@ -139,5 +214,134 @@
                 document.getElementById('dashComment').value = '';
             });
     }
+
+    function getHealthExplanation() {
+        const query = document.getElementById('aiConditionInput').value;
+        if (!query.trim()) return;
+
+        const loader = document.getElementById('aiExplanationLoader');
+        const resultDiv = document.getElementById('aiExplanationResult');
+        
+        loader.style.display = 'block';
+        resultDiv.style.display = 'none';
+
+        fetch('/explain', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: query })
+        })
+        .then(res => res.json())
+        .then(data => {
+            loader.style.display = 'none';
+            if (data.explanation) {
+                resultDiv.innerText = data.explanation;
+                resultDiv.style.display = 'block';
+            } else {
+                alert("Could not get an explanation. Please try again.");
+            }
+        })
+        .catch(err => {
+            loader.style.display = 'none';
+            alert("An error occurred while fetching the explanation.");
+            console.error(err);
+        });
+    }
+
+    function connectWearable() {
+        const btn = document.getElementById('wearableBtn');
+        const status = document.getElementById('wearableStatus');
+        const hr = document.getElementById('hr-val-main');
+        const temp = document.getElementById('temp-val-main');
+        const spo2 = document.getElementById('spo2-val-main');
+
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
+        btn.disabled = true;
+
+        setTimeout(() => {
+            fetch('/simulate_vitals')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        alert("Session expired. Please log in again.");
+                        return;
+                    }
+                    hr.innerText = `${data.heart_rate} bpm`;
+                    temp.innerText = `${data.temperature} °F`;
+                    spo2.innerText = `${data.sp02} %`;
+
+                    btn.innerHTML = '<i class="fas fa-check-circle"></i> Device Connected';
+                    btn.style.background = '#10b981'; // Success Green
+                    status.innerText = 'Device Connected (Simulated via Local PC)';
+                    status.style.color = '#10b981';
+                    
+                    setTimeout(() => {
+                       // Keep it green but allow re-sync if needed
+                       btn.disabled = false;
+                       btn.innerHTML = '<i class="fas fa-sync-alt"></i> Re-sync Wearable';
+                    }, 3000);
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Error simulating wearable data.");
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-microchip"></i> Connect Wearable';
+                });
+        }, 1500); // Small delay to feel like it's connecting
+    }
+
+    // Native Browser Speech Input Integration
+    document.addEventListener('DOMContentLoaded', () => {
+        const micBtn = document.getElementById('dashMicBtn');
+        const input = document.getElementById('aiConditionInput');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let isListening = false;
+        let recognition;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            
+            // Default to English for explainer
+            recognition.lang = 'en-IN';
+
+            micBtn.addEventListener('click', () => {
+                if (isListening) {
+                    recognition.stop();
+                    return;
+                }
+                recognition.start();
+            });
+
+            recognition.onstart = () => {
+                isListening = true;
+                micBtn.style.color = '#ef4444';
+                input.placeholder = "Listening...";
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                input.value = transcript;
+                getHealthExplanation(); // Auto-search after voice input
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                isListening = false;
+                micBtn.style.color = '#64748b';
+                input.placeholder = "E.g. Mild headache, Asthma, Hypertension...";
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                micBtn.style.color = '#64748b';
+                input.placeholder = "E.g. Mild headache, Asthma, Hypertension...";
+            };
+
+        } else {
+            console.warn('Speech Recognition not supported in this browser.');
+            micBtn.style.display = 'none';
+        }
+    });
 </script>
 {% endblock %}

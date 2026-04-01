@@ -12,6 +12,22 @@ class User(db.Model):
     health_data = db.relationship('HealthTrend', backref='user', lazy=True)
     appointments = db.relationship('Appointment', backref='user', lazy=True)
     medications = db.relationship('Medication', backref='user', lazy=True)
+    reminders = db.relationship('MedicationReminder', backref='user', lazy=True)
+    guardians = db.relationship('Guardian', backref='user', lazy=True)
+
+class MedicationReminder(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    medicine_name = db.Column(db.String(100), nullable=False)
+    time = db.Column(db.String(20), nullable=False) # e.g., "14:30"
+    status = db.Column(db.String(20), default='pending') # pending, taken, missed
+
+class Guardian(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    relation = db.Column(db.String(50), nullable=False)
 
 class HealthTrend(db.Model):
     id = db.Column(db.Integer, primary_key=True)

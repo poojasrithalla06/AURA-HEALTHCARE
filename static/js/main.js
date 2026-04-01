@@ -1,23 +1,32 @@
 document.addEventListener('DOMContentLoaded', function () {
 
     // Voice Recognition Setup
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = 'en-US';
-    recognition.continuous = false;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.continuous = false;
 
-    const micBtn = document.getElementById('micBtn');
-    if (micBtn) {
-        micBtn.addEventListener('click', () => {
-            const lang = document.getElementById('languageSelect').value;
-            recognition.lang = lang + '-IN';
-            recognition.start();
-        });
+        const micBtn = document.getElementById('micBtn');
+        if (micBtn) {
+            micBtn.addEventListener('click', () => {
+                const langSelect = document.getElementById('languageSelect');
+                const currentLang = langSelect ? langSelect.value : 'English';
+                const bcp47Map = { 'English': 'en-US', 'Hindi': 'hi-IN', 'Telugu': 'te-IN' };
+                recognition.lang = bcp47Map[currentLang] || 'en-US';
+                recognition.start();
+            });
 
-        recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            document.getElementById('chatInput').value = transcript;
-            sendMessage();
-        };
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                const chatInput = document.getElementById('chatInput');
+                if (chatInput) {
+                    chatInput.value = transcript;
+                    sendMessage();
+                }
+            };
+        }
     }
 
     // Chart.js Init (Dashboard)
@@ -52,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     legend: { display: false },
                 },
                 scales: {
-                    y: { 
+                    y: {
                         beginAtZero: false,
                         grid: { color: '#f1f5f9' },
                         ticks: { color: '#94a3b8' }
@@ -114,10 +123,13 @@ function sendMessage() {
     chatWindow.scrollTop = chatWindow.scrollHeight;
 
     setTimeout(() => {
-        fetch('/api/chatbot', {
+        fetch('/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: msg, language: document.getElementById('languageSelect').value })
+            body: JSON.stringify({
+                message: msg,
+                language: document.getElementById('languageSelect')?.value || 'English'
+            })
         })
             .then(res => res.json())
             .then(data => {
@@ -126,6 +138,11 @@ function sendMessage() {
 
                 addMessage(data.response, 'bot-msg');
                 speak(data.response);
+            })
+            .catch(err => {
+                const typing = document.getElementById('typingIndicator');
+                if (typing) typing.remove();
+                addMessage("I'm sorry, I could not connect to the local AI. Please check if Ollama is running.", 'bot-msg');
             });
     }, 1000);
 }
@@ -142,8 +159,10 @@ function addMessage(text, className) {
 function speak(text) {
     if (!window.speechSynthesis) return;
     const utterance = new SpeechSynthesisUtterance(text);
-    const lang = document.getElementById('languageSelect').value;
-    utterance.lang = lang + '-IN';
+    const langSelect = document.getElementById('languageSelect');
+    const currentLang = langSelect ? langSelect.value : 'English';
+    const bcp47Map = { 'English': 'en-IN', 'Hindi': 'hi-IN', 'Telugu': 'te-IN' };
+    utterance.lang = bcp47Map[currentLang] || 'en-IN';
     window.speechSynthesis.speak(utterance);
 }
 
@@ -162,16 +181,18 @@ function triggerSOS() {
 }
 
 function sendSOS(loc) {
+    const finalUserId = USER_ID && USER_ID !== 'None' ? USER_ID : 1;
     fetch('/api/sos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            user_id: 1,
+            user_id: finalUserId,
             location: loc
         })
     })
         .then(res => res.json())
-        .then(data => alert(data.message));
+        .then(data => alert(data.message))
+        .catch(err => alert("SOS Failed: Local network error. Please try again."));
 }
 
 let loadedMeds = [];
@@ -200,8 +221,8 @@ function loadMedications() {
                 <div style="display:flex; align-items:center;">
                     <i class="fas fa-capsules" style="color: var(--primary); margin-right: 10px;"></i>
                     <div>
-                        <span style="display:block; font-weight: 500;">${med.name}</span>
-                        <small style="color:#999;">${med.frequency || 'Daily'}</small>
+                        <span style="display:block; font-weight: 500;">${med.name || med.medicine_name}</span>
+                        <small style="color:#999;">${med.frequency || med.status || 'Daily'}</small>
                     </div>
                 </div>
                 <span style="font-weight: bold; color: var(--accent); background: #ffebee; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem;">${med.time}</span>
@@ -227,8 +248,7 @@ setInterval(() => {
 function triggerMedicationAlert(med) {
     const title = "💊 Medication Reminder: " + med.name;
     const options = {
-        body: "It's time to take your " + med.name + ". Stay healthy!",
-        icon: "/static/img/pill-icon.png" // Fallback to icon if exists
+        body: "It's time to take your " + med.name + ". Stay healthy!"
     };
 
     if ("Notification" in window && Notification.permission === "granted") {

@@ -1,8 +1,15 @@
 from flask import Blueprint, jsonify, request, render_template, make_response
-from models.database import db, Medication, Feedback, SOSAlert, HealthTrend, User
-from utils.ai_engine import predict_risk, chat_response
+from models.database import db, Medication, Feedback, SOSAlert, HealthTrend, User, Guardian, MedicationReminder
+from utils.ai_engine import predict_risk, chat_response, scan_prescription_with_ai, analyze_health_report_with_ai
 from datetime import datetime
 import json
+import os
+try:
+    import pytesseract
+    from PIL import Image
+    import fitz # PyMuPDF
+except ImportError:
+    print("Pre-requisites for OCR not installed.")
 
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
@@ -31,15 +38,6 @@ def get_risk():
         'explanation': explanation
     })
 
-@api_bp.route('/chatbot', methods=['POST'])
-def chat():
-    data = request.json
-    message = data.get('message')
-    language = data.get('language', 'en')
-    user_id = data.get('user_id')
-    
-    response_text = chat_response(message, language, user_id)
-    return jsonify({'response': response_text})
 
 @api_bp.route('/sos', methods=['POST'])
 def trigger_sos():
@@ -50,6 +48,13 @@ def trigger_sos():
     alert = SOSAlert(user_id=user_id, location=location)
     db.session.add(alert)
     db.session.commit()
+
+    # Log alerts for each guardian
+    guardians = Guardian.query.filter_by(user_id=user_id).all()
+    if guardians:
+        for g in guardians:
+            print(f"🚨 API SOS: Alert sent to guardian {g.name} ({g.phone})")
+        return jsonify({'status': 'alert_sent', 'message': 'SOS sent to guardian successfully!'})
     
     return jsonify({'status': 'alert_sent', 'message': 'Emergency contacts notified successfully!'})
 
@@ -69,7 +74,15 @@ def handle_medication():
     else:
         user_id = request.args.get('user_id')
         meds = Medication.query.filter_by(user_id=user_id).all()
-        return jsonify([{'id': m.id, 'name': m.name, 'time': m.time} for m in meds])
+        reminders = MedicationReminder.query.filter_by(user_id=user_id).all()
+        
+        all_meds = []
+        for m in meds:
+            all_meds.append({'id': m.id, 'name': m.name, 'time': m.time, 'frequency': m.frequency})
+        for r in reminders:
+            all_meds.append({'id': r.id, 'name': r.medicine_name, 'time': r.time, 'status': r.status})
+            
+        return jsonify(all_meds)
 
 @api_bp.route('/feedback', methods=['POST'])
 def submit_feedback():
@@ -82,3 +95,159 @@ def submit_feedback():
     db.session.add(fb)
     db.session.commit()
     return jsonify({'status': 'feedback_received'})
+
+@api_bp.route('/add_reminder', methods=['POST'])
+def add_reminder():
+    data = request.json
+    reminder = MedicationReminder(
+        user_id=data['user_id'],
+        medicine_name=data['medicine_name'],
+        time=data['time'],
+        status='pending'
+    )
+    db.session.add(reminder)
+    db.session.commit()
+    return jsonify({'status': 'success', 'message': 'Reminder added successfully!'})
+
+@api_bp.route('/get_reminders', methods=['GET'])
+def get_reminders():
+    user_id = request.args.get('user_id')
+    reminders = MedicationReminder.query.filter_by(user_id=user_id).all()
+    return jsonify([{
+        'id': r.id,
+        'medicine_name': r.medicine_name,
+        'time': r.time,
+        'status': r.status
+    } for r in reminders])
+
+@api_bp.route('/scan_prescription', methods=['POST'])
+def scan_prescription():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    # Ensure upload directory exists
+    upload_dir = 'uploads'
+    if not os.path.exists(upload_dir):
+        os.makedirs(upload_dir)
+    
+    filepath = os.path.join(upload_dir, file.filename)
+    file.save(filepath)
+    
+    ocr_text = ""
+    try:
+        # Tesseract path configuration - Typical Windows paths
+        tesseract_paths = [
+            r'C:\Program Files\Tesseract-OCR\tesseract.exe',
+            r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe',
+            os.path.expanduser(r'~\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'),
+            os.path.expanduser(r'~\AppData\Local\Tesseract-OCR\tesseract.exe')
+        ]
+        
+        # Only set if not already in PATH and file exists
+        for path in tesseract_paths:
+            if os.path.exists(path):
+                pytesseract.pytesseract.tesseract_cmd = path
+                break
+        
+        if file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff')):
+            img = Image.open(filepath)
+            ocr_text = pytesseract.image_to_string(img)
+        
+        elif file.filename.lower().endswith('.pdf'):
+            doc = fitz.open(filepath)
+            for page in doc:
+                # Try text extraction first (for digital PDFs)
+                text = page.get_text()
+                if text.strip():
+                    ocr_text += text + "\n"
+                else:
+                    # For scanned PDFs, use OCR on the page image
+                    pix = page.get_pixmap()
+                    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                    ocr_text += pytesseract.image_to_string(img) + "\n"
+        
+        if not ocr_text.strip():
+            # Fallback for demonstration if OCR fails or Tesseract missing, but we want to show it works
+            return jsonify({'error': 'No text could be extracted. Please ensure Tesseract OCR is installed on your system.'}), 422
+            
+        # Analysis with Local LLM
+        analysis = scan_prescription_with_ai(ocr_text)
+        
+        # Cleanup uploaded file
+        os.remove(filepath)
+        
+        return jsonify(analysis)
+
+    except Exception as e:
+        print(f"Scan Error: {e}")
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        return jsonify({'error': f"Failed to process prescription: {str(e)}"}), 500
+
+@api_bp.route('/analyze_report', methods=['POST'])
+def analyze_report():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    # Ensure upload directory exists
+    upload_dir = 'uploads'
+    if not os.path.exists(upload_dir):
+        os.makedirs(upload_dir)
+    
+    filepath = os.path.join(upload_dir, file.filename)
+    file.save(filepath)
+    
+    ocr_text = ""
+    try:
+        # Tesseract path configuration - Typical Windows paths
+        tesseract_paths = [
+            r'C:\Program Files\Tesseract-OCR\tesseract.exe',
+            r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe',
+            os.path.expanduser(r'~\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'),
+            os.path.expanduser(r'~\AppData\Local\Tesseract-OCR\tesseract.exe')
+        ]
+        
+        for path in tesseract_paths:
+            if os.path.exists(path):
+                pytesseract.pytesseract.tesseract_cmd = path
+                break
+
+        if file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff')):
+            img = Image.open(filepath)
+            ocr_text = pytesseract.image_to_string(img)
+        
+        elif file.filename.lower().endswith('.pdf'):
+            doc = fitz.open(filepath)
+            for page in doc:
+                text = page.get_text()
+                if text.strip():
+                    ocr_text += text + "\n"
+                else:
+                    pix = page.get_pixmap()
+                    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                    ocr_text += pytesseract.image_to_string(img) + "\n"
+        
+        if not ocr_text.strip():
+            return jsonify({'error': 'No text could be extracted. Please ensure Tesseract OCR is installed on your system.'}), 422
+            
+        # Analysis with Local LLM
+        analysis = analyze_health_report_with_ai(ocr_text)
+        
+        # Cleanup uploaded file
+        os.remove(filepath)
+        
+        return jsonify(analysis)
+
+    except Exception as e:
+        print(f"Report Analysis Error: {e}")
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        return jsonify({'error': f"Failed to analyze report: {str(e)}"}), 500

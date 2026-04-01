@@ -11,6 +11,13 @@
             style="background: var(--primary);">System Users</button>
         <button onclick="showTab('feedbackTab')" class="cta-btn" id="feedbackTabBtn"
             style="background: #ccc; color: #333;">AI Improvements Feedback</button>
+        <button onclick="showTab('sosTab')" class="cta-btn" id="sosTabBtn"
+            style="background: #ccc; color: #333; position: relative;">SOS Alerts
+            {% set active_alerts = sos_alerts | selectattr("status", "equalto", "active") | list %}
+            {% if active_alerts %}
+            <span style="position: absolute; top: -8px; right: -8px; background: red; color: white; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: 0 0 10px red;">{{ active_alerts|length }}</span>
+            {% endif %}
+        </button>
     </div>
 
     <!-- Users Tab -->
@@ -90,15 +97,63 @@
             </table>
         </div>
     </div>
+
+    <!-- SOS Tab -->
+    <div id="sosTab" style="display: none;">
+        <h3 style="margin-bottom: 1rem; color: #E91E63;">Emergency SOS Alerts</h3>
+        <div style="overflow-x: auto;">
+            <table class="table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #E91E63; color: white;">
+                        <th style="padding: 1rem; border-radius: 8px 0 0 8px;">Date/Time</th>
+                        <th style="padding: 1rem;">User ID</th>
+                        <th style="padding: 1rem;">Status</th>
+                        <th style="padding: 1rem; border-radius: 0 8px 8px 0;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in sos_alerts %}
+                    <tr style="border-bottom: 1px solid #eee; {{ 'background: #ffebee;' if alert.status == 'active' else '' }}">
+                        <td style="padding: 1rem;">{{ alert.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td style="padding: 1rem; font-weight: bold;">User #{{ alert.user_id }}</td>
+                        <td style="padding: 1rem;">
+                            {% if alert.status == 'active' %}
+                            <span class="badge" style="background: red; color: white; padding: 5px 10px; border-radius: 12px; font-size: 0.8rem; animation: pulse 1.5s infinite;">ACTIVE</span>
+                            {% else %}
+                            <span class="badge" style="background: #4CAF50; color: white; padding: 5px 10px; border-radius: 12px; font-size: 0.8rem;">Resolved</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem;">
+                            {% if alert.status == 'active' %}
+                            <form action="{{ url_for('main.resolve_sos', alert_id=alert.id) }}" method="POST" style="margin: 0;">
+                                <button type="submit" class="cta-btn" style="background: #4CAF50; padding: 5px 15px; font-size: 0.8rem;">Resolve</button>
+                            </form>
+                            {% else %}
+                            <span style="color: grey;">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 2rem; color: #666;">No SOS alerts recorded.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script>
     function showTab(tabId) {
         document.getElementById('usersTab').style.display = tabId === 'usersTab' ? 'block' : 'none';
         document.getElementById('feedbackTab').style.display = tabId === 'feedbackTab' ? 'block' : 'none';
+        document.getElementById('sosTab').style.display = tabId === 'sosTab' ? 'block' : 'none';
 
         document.getElementById('usersTabBtn').style.background = tabId === 'usersTab' ? 'var(--primary)' : '#ccc';
         document.getElementById('feedbackTabBtn').style.background = tabId === 'feedbackTab' ? 'var(--secondary)' : '#ccc';
+        document.getElementById('sosTabBtn').style.background = tabId === 'sosTab' ? '#E91E63' : '#ccc';
+        document.getElementById('sosTabBtn').style.color = tabId === 'sosTab' ? 'white' : '#333';
 
         // Update hash without scrolling
         if (history.pushState) {
@@ -112,9 +167,59 @@
     window.addEventListener('load', function () {
         if (window.location.hash === '#feedbackTab') {
             showTab('feedbackTab');
+        } else if (window.location.hash === '#sosTab') {
+            showTab('sosTab');
         } else {
             showTab('usersTab');
         }
     });
+
+    {% set active_alerts_bottom = sos_alerts | selectattr("status", "equalto", "active") | list %}
+    {% if active_alerts_bottom %}
+    // Buzzer sound logic for active SOS alerts
+    document.addEventListener("DOMContentLoaded", function() {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playBuzzer() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // A4
+            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime + 0.2); // beep high
+            
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.5);
+        }
+
+        let hasInteracted = false;
+        
+        // Add a visible alert to coax user into clicking, giving us permission to play audio
+        const banner = document.createElement('div');
+        banner.style.cssText = "position:fixed;top:0;left:0;width:100%;background:red;color:white;text-align:center;padding:15px;font-weight:bold;z-index:9999;cursor:pointer;";
+        banner.innerHTML = "⚠️ ACTIVE SOS ALERT PENDING! Click anywhere or here to enable alarm sound. ⚠️";
+        document.body.appendChild(banner);
+
+        document.body.addEventListener('click', () => {
+             hasInteracted = true;
+             banner.style.display = 'none';
+        }, {once: true});
+
+        setInterval(() => {
+            if (hasInteracted) {
+                playBuzzer();
+            }
+        }, 1000); // Beep every second
+    });
+    {% endif %}
 </script>
 {% endblock %}
