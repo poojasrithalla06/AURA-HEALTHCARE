@@ -76,6 +76,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (preferredVoice) {
                 utterance.voice = preferredVoice;
+            } else {
+                console.warn(`No voice found for ${currentLang}. Falling back to default.`);
+                // If it's a vital health notification, we might want to alert the user
+                if (currentLang !== 'English') {
+                    const msgDiv = document.createElement('div');
+                    msgDiv.style.cssText = "font-size: 0.75rem; color: #ef4444; margin-top: 0.2rem; font-style: italic;";
+                    msgDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${currentLang} voice not installed in your browser. Showing text only.`;
+                    chatWindow.appendChild(msgDiv);
+                    chatWindow.scrollTop = chatWindow.scrollHeight;
+                }
             }
         }
         
