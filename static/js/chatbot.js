@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Voice Output Setup (Text-to-Speech)
     let isVoiceEnabled = localStorage.getItem('voiceOutput') === 'true';
 
     const updateVoiceUI = () => {
@@ -45,31 +44,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateVoiceUI();
 
+    let voices = [];
+    const loadVoices = () => {
+        voices = window.speechSynthesis.getVoices();
+    };
+    if ('speechSynthesis' in window) {
+        loadVoices();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+    }
+
     const speakResponse = (text) => {
         if (!isVoiceEnabled || !('speechSynthesis' in window)) return;
-        const cleanText = text.replace(/\*\*/g, '');
+        const cleanText = text.replace(/\*\*/g, '').replace(/<[^>]*>/g, ''); // Remove markdown and tags
         window.speechSynthesis.cancel();
+        
         const utterance = new SpeechSynthesisUtterance(cleanText);
         const langMap = { 'English': 'en-US', 'Hindi': 'hi-IN', 'Telugu': 'te-IN' };
         const currentLang = langSelect ? langSelect.value : 'English';
         utterance.lang = langMap[currentLang] || 'en-US';
         
-        const voices = window.speechSynthesis.getVoices();
+        // Ensure voices are loaded
+        if (voices.length === 0) loadVoices();
+        
         if (voices.length > 0) {
-            let preferredVoice = voices.find(v => v.lang.replace('_', '-').toLowerCase().includes(utterance.lang.toLowerCase()));
+            // Find best voice match: same language + same region, then same language
+            let preferredVoice = voices.find(v => v.lang === utterance.lang);
             if (!preferredVoice) {
-                preferredVoice = voices.find(v => v.lang.toLowerCase().startsWith(utterance.lang.split('-')[0].toLowerCase()));
+                preferredVoice = voices.find(v => v.lang.startsWith(utterance.lang.split('-')[0]));
             }
-            if (preferredVoice) utterance.voice = preferredVoice;
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            }
         }
+        
+        // Pitch and rate for a more "Caring Assistant" feel
+        utterance.pitch = 1.0;
+        utterance.rate = 1.0;
         
         window.speechSynthesis.speak(utterance);
     };
 
-    // Speak initial message if voice is already ON
-    if (isVoiceEnabled) {
-        speakResponse("Hello! I am Aura. How can I assist you with your health today?");
-    }
+    // Note: Most browsers block speech until a user interaction. 
+    // We'll skip the auto-speak on page load and only speak on manual toggle or response.
 
     if (voiceToggleBtn) {
         voiceToggleBtn.addEventListener('click', () => {
@@ -79,9 +97,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isVoiceEnabled && window.speechSynthesis.speaking) {
                 window.speechSynthesis.cancel();
             } else if (isVoiceEnabled) {
-                // Direct user interaction forces the browser to allow speech synthesis
-                const utterance = new SpeechSynthesisUtterance("Voice is now enabled");
-                window.speechSynthesis.speak(utterance);
+                // Ensure voices are fresh
+                loadVoices();
+                speakResponse("Voice assistance is now active.");
             }
         });
     }
