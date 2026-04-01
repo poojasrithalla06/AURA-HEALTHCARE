@@ -69,11 +69,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (voices.length === 0) loadVoices();
         
         if (voices.length > 0) {
-            // Find best voice match: same language + same region, then same language
-            let preferredVoice = voices.find(v => v.lang === utterance.lang);
+            const targetLang = utterance.lang.toLowerCase().replace('_', '-');
+            const targetBase = targetLang.split('-')[0];
+
+            // Find best voice match: exact, then same base language
+            let preferredVoice = voices.find(v => v.lang.toLowerCase().replace('_', '-') === targetLang);
             if (!preferredVoice) {
-                preferredVoice = voices.find(v => v.lang.startsWith(utterance.lang.split('-')[0]));
+                preferredVoice = voices.find(v => v.lang.toLowerCase().startsWith(targetBase));
             }
+            
             if (preferredVoice) {
                 utterance.voice = preferredVoice;
             } else {
